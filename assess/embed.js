@@ -202,8 +202,6 @@
     <p class="hda-disclaimer">※概算です。実際の買取金額は店頭での計量・状態確認と当日の相場で決まります。ハッピーランプは演出で、金額には影響しません。</p>
     <button type="button" class="hda-btn hda-btn--outline hda-btn--big hda-again" data-el="again">別の電線を査定する</button>
   </section>
-
-  <p class="hda-src">買取単価の出典: <a data-el="source" href="#" target="_blank" rel="noopener">被覆銅線買取価格（店頭価格表）</a>・<span data-el="updated"></span>時点</p>
   `;
 
   /* ---------------- 本体 ---------------- */
@@ -240,8 +238,6 @@
     /* 価格 */
     function renderPrices() {
       $$("[data-price]").forEach((e) => { e.textContent = yen(PRICES[e.dataset.price]); });
-      el("updated").textContent = priceUpdated || "—";
-      el("source").href = CFG.priceSource || "https://colors.main.jp/";
       if (state.type) el("chosen").innerHTML = `<b>${TYPES[state.type].name}</b> × <span>${yen(PRICES[state.type])}</span>円/kg`;
     }
     async function fetchRemotePrices() {

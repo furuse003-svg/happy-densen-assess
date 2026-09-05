@@ -778,7 +778,6 @@
 .hda-disclaimer { margin-top: 24px; font-size: 14px; color: var(--hda-text-sub); line-height: 1.6; }
 
 .hda-again { margin-top: 16px; }
-.hda-src { margin-top: 16px; font-size: 14px; color: var(--hda-text-sub); text-align: center; line-height: 1.6; }
 
 /* 紙吹雪キャンバス */
 .hda-confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9000; }
@@ -912,7 +911,7 @@ window.HAPPY_CONFIG = {
     <h2>このデモについて</h2>
     <ul>
       <li>判定は現在、AIサーバー未接続のため「簡易判定」（写真の色と断面の形から推定）で動いています。結果はタップで修正できます。</li>
-      <li>金額は「店頭単価 × 重量」の概算です（単価は colors.main.jp の店頭価格表・2026-09-03時点）。</li>
+      <li>金額は「店頭単価 × 重量」の概算です（単価は2026-09-03時点）。</li>
       <li>ハッピーランプは約1/3の確率で点灯する演出で、金額には影響しません。URL末尾に <code>?happy=1</code> を付けると必ず点灯します。</li>
       <li>効果音は右上の 🔇 で ON にできます。</li>
     </ul>
@@ -1124,8 +1123,6 @@ window.HAPPY_CONFIG = {
     <p class="hda-disclaimer">※概算です。実際の買取金額は店頭での計量・状態確認と当日の相場で決まります。ハッピーランプは演出で、金額には影響しません。</p>
     <button type="button" class="hda-btn hda-btn--outline hda-btn--big hda-again" data-el="again">別の電線を査定する</button>
   </section>
-
-  <p class="hda-src">買取単価の出典: <a data-el="source" href="#" target="_blank" rel="noopener">被覆銅線買取価格（店頭価格表）</a>・<span data-el="updated"></span>時点</p>
   `;
 
   /* ---------------- 本体 ---------------- */
@@ -1162,8 +1159,6 @@ window.HAPPY_CONFIG = {
     /* 価格 */
     function renderPrices() {
       $$("[data-price]").forEach((e) => { e.textContent = yen(PRICES[e.dataset.price]); });
-      el("updated").textContent = priceUpdated || "—";
-      el("source").href = CFG.priceSource || "https://colors.main.jp/";
       if (state.type) el("chosen").innerHTML = `<b>${TYPES[state.type].name}</b> × <span>${yen(PRICES[state.type])}</span>円/kg`;
     }
     async function fetchRemotePrices() {
