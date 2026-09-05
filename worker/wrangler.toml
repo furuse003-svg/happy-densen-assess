@@ -1,0 +1,13 @@
+name = "happy-densen-api"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# 許可するオリジン（カンマ区切り）。ローカル確認時は http://localhost:8080 などを追加
+ALLOWED_ORIGINS = "https://lp.used-cable.net,https://used-cable.net,https://www.used-cable.net"
+PRICE_SOURCE_URL = "https://colors.main.jp/"
+MODEL = "claude-opus-5"
+
+# シークレット（コミットしない）:
+#   wrangler secret put ANTHROPIC_API_KEY

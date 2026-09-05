@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>埋め込みデモ｜ハッピーデンセン AI自動査定</title>
+<!-- レスポンシブな公式サイトを模した確認用ページ。ウィジェット部分（2行）だけが本番に差し込む対象 -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; color: #333; font-family: "Noto Sans JP", sans-serif; background: #fff; }
+  img { display: block; max-width: 100%; }
+  .site-header { position: sticky; top: 0; z-index: 100; display: flex; align-items: center; gap: 16px; height: 70px; padding: 0 20px; background: #eaeaea; box-shadow: 0 2px 8px rgb(0 0 0 / 8%); }
+  .site-header img { width: 160px; }
+  .site-header nav { margin-left: auto; display: flex; gap: 18px; font-size: 14px; font-weight: 500; color: #00156d; }
+  .site-header nav span:nth-child(n+3) { display: none; }
+  @media (min-width: 700px) { .site-header nav span:nth-child(n+3) { display: inline; } }
+  .hero { padding: 40px 20px; text-align: center; background: #feffef; }
+  .hero h1 { margin: 0 0 8px; color: #00156d; font-size: clamp(22px, 4vw, 36px); }
+  .hero p { margin: 0; color: #555; }
+  .container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+  .section-title { margin: 0 0 16px; color: #00156d; font-size: clamp(20px, 3vw, 28px); text-align: center; }
+  .dummy { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .dummy div { height: 120px; border-radius: 12px; background: #f1f1f1; }
+  footer { padding: 30px 20px; background: #1c253a; color: #fff; text-align: center; font-size: 12px; }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <img src="https://lp.used-cable.net/images/logo.png" alt="ハッピーデンセン">
+  <nav><span>買取価格</span><span>店舗案内</span><span>買取の流れ</span><span>お問い合わせ</span></nav>
+</header>
+
+<section class="hero">
+  <h1>半端・廃材電線もまるごと買取</h1>
+  <p>（このページは埋め込み確認用のダミーサイトです。幅を変えてレスポンシブを確認できます）</p>
+</section>
+
+<div class="container">
+  <h2 class="section-title">写真でかんたん！AI自動査定</h2>
+
+  <!-- ▼▼▼ ここから埋め込み（本番サイトに貼るのはこの2行） ▼▼▼ -->
+  <div id="happy-assess"></div>
+  <script src="assess/embed.js" defer></script>
+  <!-- ▲▲▲ ここまで ▲▲▲ -->
+</div>
+
+<div class="container">
+  <h2 class="section-title">（サイト側の他セクション）</h2>
+  <div class="dummy"><div></div><div></div><div></div></div>
+</div>
+
+<footer>北海道プリオン株式会社 ハッピーデンセン</footer>
+</body>
+</html>

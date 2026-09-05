@@ -1,0 +1,3 @@
+# ローカル開発用 (cp .dev.vars.example .dev.vars して値を入れる。.dev.vars はgit管理外)
+ANTHROPIC_API_KEY=sk-ant-...
+ALLOWED_ORIGINS=*
