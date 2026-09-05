@@ -36,7 +36,12 @@ python3 build_share.py   # → dist/happy-assess-share.html と index.html
 ```
 
 CSS・JS・画像・サンプル写真をすべて埋め込んだ単一HTMLです。ウィジェットの上に「サンプル写真で試す」ボタン（8割/6割/Fケーブル）が付きます。
-公開中のアーティファクト: https://claude.ai/code/artifact/a419efca-6667-4cb5-a41d-98c20dd6ec06 （ウィジェットを更新したら再ビルドして同じURLに再公開）
+公開URL（GitHub Pages・誰でも閲覧可）: https://furuse003-svg.github.io/happy-densen-assess/
+- `demo.html` … サイト埋め込みの見え方、`widget.html` … ウィジェット単体、`assess/embed.js` … 埋め込み用スクリプト（試験的にこのURLを直接サイトから読み込むことも可能）
+- リポジトリ: https://github.com/furuse003-svg/happy-densen-assess （main に push すると自動で反映）
+- Claudeアーティファクト版（非公開リンク）: https://claude.ai/code/artifact/a419efca-6667-4cb5-a41d-98c20dd6ec06
+
+ウィジェットを更新したら `python3 build_share.py` → `git add -A && git commit && git push` で公開URLが更新される。
 
 ## AI判定API（Cloudflare Worker）のデプロイ
 
