@@ -36,14 +36,11 @@ style_css = (A / "style.css").read_text(encoding="utf-8")
 embed_js = (A / "embed.js").read_text(encoding="utf-8")
 
 # 画像を data URI に
-assets = {p.name: data_uri(p, "image/jpeg" if p.suffix.lower() in (".jpg", ".jpeg") else "image/png") for p in (A / "img").iterdir() if p.suffix.lower() in (".png", ".jpg", ".jpeg")}
+assets = {p.name: data_uri(p, "image/png") for p in (A / "img").glob("*.png") if p.name != "nakamura.png"}
 embed_js = embed_js.replace('const IMG = BASE + "img/";', 'const IMG = "";')
 for name, uri in assets.items():
     embed_js = embed_js.replace("${IMG}" + name, uri)
 assert "${IMG}" not in embed_js, "未置換の画像参照があります"
-# CSS内の背景画像参照も data URI に
-for name, uri in assets.items():
-    style_css = style_css.replace(f'url("img/{name}")', f'url("{uri}")')
 # インライン<script>内で終了タグと誤認されないようにエスケープ（コメント内の記述）
 embed_js = embed_js.replace("</script>", "<\\/script>")
 # インラインCSS/設定を使うので外部読み込みをスキップ
@@ -70,19 +67,19 @@ html = f"""<title>ハッピーデンセン AI査定デモ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,500;0,700;0,800;1,800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
-  :root {{ color-scheme: dark; --bg: #05080f; --ink: #ffffff; --muted: #c9d2e3; --pink: #ff2d95; --navy: #ffd400; --card: #101a30; --line: #2b3a57; }}
+  :root {{ color-scheme: light; --bg: #f6f0f2; --ink: #1c253a; --muted: #6b6470; --pink: #ff1874; --navy: #00156d; --card: #ffffff; --line: #e8dde2; }}
   html, body {{ margin: 0; background: var(--bg); color: var(--ink); font-family: "Noto Sans JP", "Hiragino Sans", sans-serif; font-size: 14px; line-height: 1.7; }}
-  .page {{ max-width: 1120px; margin: 0 auto; padding: 20px 16px 48px; }}
+  .page {{ max-width: 720px; margin: 0 auto; padding: 20px 16px 48px; }}
   @media (min-width: 560px) {{ .page {{ padding: 32px 20px 64px; }} }}
   .intro {{ display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }}
-  .intro__badge {{ display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--navy); color: #1a1a1a; font-family: Jost, sans-serif; font-weight: 700; font-size: 11px; letter-spacing: .14em; }}
+  .intro__badge {{ display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--navy); color: #fff; font-family: Jost, sans-serif; font-weight: 700; font-size: 11px; letter-spacing: .14em; }}
   .intro h1 {{ margin: 6px 0 0; font-size: 20px; font-weight: 900; letter-spacing: .02em; text-wrap: balance; }}
   .intro p {{ margin: 2px 0 0; color: var(--muted); font-size: 12px; }}
   .samples {{ margin: 0 0 12px; padding: 12px 14px 14px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); }}
   .samples h2 {{ margin: 0 0 8px; font-size: 13px; font-weight: 700; color: var(--navy); }}
   .samples h2 small {{ margin-left: 6px; color: var(--muted); font-weight: 500; }}
   .samples__row {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }}
-  .sample {{ display: grid; grid-template-rows: auto auto; gap: 6px; margin: 0; padding: 6px; border: 2px solid var(--line); border-radius: 10px; background: #0b1220; text-align: left; cursor: pointer; font-family: inherit; transition: border-color .15s, transform .1s; }}
+  .sample {{ display: grid; grid-template-rows: auto auto; gap: 6px; margin: 0; padding: 6px; border: 2px solid var(--line); border-radius: 10px; background: #fff; text-align: left; cursor: pointer; font-family: inherit; transition: border-color .15s, transform .1s; }}
   .sample:hover, .sample:focus-visible {{ border-color: var(--pink); outline: none; }}
   .sample:active {{ transform: scale(.98); }}
   .sample img {{ display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; }}
@@ -126,7 +123,7 @@ html = f"""<title>ハッピーデンセン AI査定デモ</title>
     <ul>
       <li>判定は現在、AIサーバー未接続のため「簡易判定」（写真の色と断面の形から推定）で動いています。結果はタップで修正できます。</li>
       <li>金額は「店頭単価 × 重量」の概算です（単価は{updated}時点）。</li>
-      <li>ネオンサイン「ハッピー価格」の点灯とサムズアップ中村の登場は約1/3の確率の演出で、金額には影響しません。URL末尾に <code>?happy=1</code> を付けると必ず点灯します。</li>
+      <li>ハッピーランプは約1/3の確率で点灯する演出で、金額には影響しません。URL末尾に <code>?happy=1</code> を付けると必ず点灯します。</li>
       <li>効果音は右上の 🔇 で ON にできます。</li>
     </ul>
   </section>

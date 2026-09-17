@@ -42,196 +42,166 @@
 
   /* ---------------- テンプレート ---------------- */
   const TEMPLATE = `
-  <div class="hda-bg" aria-hidden="true"></div>
-  <button type="button" class="hda-sound" data-el="sound" aria-pressed="false" aria-label="効果音の切り替え" title="効果音">🔇</button>
-  <div class="hda-grid">
-  <div class="hda-main">
-    <header class="hda-hero">
-      <img class="hda-hero__title" src="${IMG}title.jpg" alt="AIサイボーグ中村の電線自動査定">
-      <p class="hda-hero__lead">写真を撮って、送るだけ。<br>あなたの電線を<em>AI</em>が瞬時に査定！</p>
-      <div class="hda-hero__chara" aria-hidden="true"><img src="${IMG}nakamura-cables.jpg" alt=""></div>
-    </header>
-
-    <div class="hda-tabs" role="tablist" aria-label="査定方法">
-      <button type="button" role="tab" class="hda-tab is-active" data-el="tabPhoto" aria-selected="true">📷 写真で査定</button>
-      <button type="button" role="tab" class="hda-tab" data-el="tabWeight" aria-selected="false">⚖ 重さで査定</button>
+  <div class="hda-head">
+    <p class="hda-head__tag">＼ 写真を撮るだけ・約10秒 ／</p>
+    <h2 class="hda-head__title"><span class="hda-head__ai">AI</span>が電線を見分けて<br><em>買取金額</em>をズバッと概算！</h2>
+    <div class="hda-head__body">
+      <p class="hda-head__lead">8割銅線 <b data-price="hachi"></b>円<br>6割銅線 <b data-price="roku"></b>円<br>Fケーブル <b data-price="f"></b>円<small>税込・1kgあたり</small></p>
+      <img src="${IMG}nakamura-point.png" class="hda-head__chara" alt="">
     </div>
+  </div>
 
-    <ol class="hda-steps" data-el="steps">
-      <li class="is-active"><span>1</span>写真</li>
-      <li><span>2</span>AI判定</li>
-      <li><span>3</span>重量</li>
-      <li><span>4</span>査定結果</li>
-    </ol>
+  <ol class="hda-steps" data-el="steps">
+    <li class="is-active"><span>1</span>写真</li>
+    <li><span>2</span>AI判定</li>
+    <li><span>3</span>重量</li>
+    <li><span>4</span>金額</li>
+  </ol>
 
-    <!-- STEP 1 -->
-    <section class="hda-panel is-active" data-step="1">
-      <h3 class="hda-panel__title"><span class="hda-panel__num">STEP 1</span>電線の写真をアップ</h3>
-      <p class="hda-panel__lead">被覆の色と<b>断面（切り口）</b>が見えるように撮ってください。1枚でOKです。</p>
-      <label class="hda-drop" data-el="drop">
-        <input type="file" data-el="file" accept="image/*" hidden>
-        <div class="hda-drop__inner" data-el="dropInner">
-          <img class="hda-drop__icon" src="${IMG}upload-icon.png" alt="">
-          <p class="hda-drop__text">電線の写真をドラッグ＆ドロップ<br>または <u>こちらをクリックして画像を選択</u></p>
-          <p class="hda-drop__sub">スマホならタップで撮影もできます（JPEG / PNG / HEIC）</p>
-        </div>
-        <img data-el="preview" class="hda-drop__preview" alt="" hidden>
-        <div class="hda-scan" data-el="scan" hidden>
-          <div class="hda-scan__line"></div>
-          <div class="hda-scan__corner hda-scan__corner--tl"></div>
-          <div class="hda-scan__corner hda-scan__corner--tr"></div>
-          <div class="hda-scan__corner hda-scan__corner--bl"></div>
-          <div class="hda-scan__corner hda-scan__corner--br"></div>
-          <p class="hda-scan__text"><img src="${IMG}robot-icon.jpg" alt="">AI中村が解析中<span class="hda-dots"><i>.</i><i>.</i><i>.</i></span></p>
-        </div>
-      </label>
-      <div class="hda-examples">
-        <p class="hda-examples__title">こんな写真でOK！</p>
-        <div class="hda-examples__row">
-          <figure><img src="${IMG}photo-overall.jpg" alt=""><figcaption>全体写真</figcaption></figure>
-          <figure><img src="${IMG}photo-model.jpg" alt=""><figcaption>品番がわかる写真</figcaption></figure>
-          <figure><img src="${IMG}photo-label.jpg" alt=""><figcaption>ラベルの写真</figcaption></figure>
-          <figure><img src="${IMG}photo-angle.jpg" alt=""><figcaption>断面が見える写真</figcaption></figure>
-        </div>
+  <!-- STEP 1 -->
+  <section class="hda-panel is-active" data-step="1">
+    <h3 class="hda-panel__title"><span class="hda-panel__num">STEP 1</span>電線の写真をアップ</h3>
+    <p class="hda-panel__lead">被覆の色と<b>断面（切り口）</b>が見えるように撮ってください。</p>
+    <label class="hda-drop" data-el="drop">
+      <input type="file" data-el="file" accept="image/*" hidden>
+      <div class="hda-drop__inner" data-el="dropInner">
+        <svg viewBox="0 0 64 64" class="hda-drop__icon" aria-hidden="true">
+          <rect x="6" y="16" width="52" height="38" rx="6" fill="none" stroke="currentColor" stroke-width="3"/>
+          <path d="M22 16l4-7h12l4 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+          <circle cx="32" cy="35" r="10" fill="none" stroke="currentColor" stroke-width="3"/>
+          <circle cx="48" cy="24" r="2.5" fill="currentColor"/>
+        </svg>
+        <p class="hda-drop__text">ここをタップして<br>撮影 or 写真を選ぶ</p>
+        <p class="hda-drop__sub">JPEG / PNG / HEIC対応</p>
       </div>
-      <div class="hda-btnrow">
-        <button type="button" class="hda-btn hda-btn--outline" data-el="camera">📷 カメラで撮る</button>
-        <button type="button" class="hda-btn hda-btn--outline" data-el="pick">🖼 写真を選ぶ</button>
+      <img data-el="preview" class="hda-drop__preview" alt="" hidden>
+      <div class="hda-scan" data-el="scan" hidden>
+        <div class="hda-scan__line"></div>
+        <div class="hda-scan__corner hda-scan__corner--tl"></div>
+        <div class="hda-scan__corner hda-scan__corner--tr"></div>
+        <div class="hda-scan__corner hda-scan__corner--bl"></div>
+        <div class="hda-scan__corner hda-scan__corner--br"></div>
+        <p class="hda-scan__text"><img src="${IMG}nakamura-cheer.png" alt="">ハッピー中村が鑑定中<span class="hda-dots"><i>.</i><i>.</i><i>.</i></span></p>
       </div>
-      <button type="button" class="hda-btn hda-btn--primary hda-btn--big" data-el="classify" disabled>AIで判定する</button>
-      <ul class="hda-tips">
-        <li>明るい場所で、電線に近づいて撮影</li>
-        <li>黒い電線は「断面の銅の太さ」が判定のカギ</li>
-        <li>灰色の平たい線はFケーブル（VA線）</li>
-      </ul>
-    </section>
+    </label>
+    <div class="hda-btnrow">
+      <button type="button" class="hda-btn hda-btn--outline" data-el="camera">📷 カメラで撮る</button>
+      <button type="button" class="hda-btn hda-btn--outline" data-el="pick">🖼 写真を選ぶ</button>
+    </div>
+    <button type="button" class="hda-btn hda-btn--primary hda-btn--big" data-el="classify" disabled>AIで判定する</button>
+    <ul class="hda-tips">
+      <li>明るい場所で、電線に近づいて撮影</li>
+      <li>黒い電線は「断面の銅の太さ」が判定のカギ</li>
+      <li>灰色の平たい線はFケーブル（VA線）</li>
+    </ul>
+  </section>
 
-    <!-- STEP 2 -->
-    <section class="hda-panel" data-step="2">
-      <h3 class="hda-panel__title"><span class="hda-panel__num">STEP 2</span><span data-el="step2Title">AI判定結果</span></h3>
-      <div class="hda-result" data-el="result">
+  <!-- STEP 2 -->
+  <section class="hda-panel" data-step="2">
+    <h3 class="hda-panel__title"><span class="hda-panel__num">STEP 2</span>AI判定結果</h3>
+    <div class="hda-result" data-el="result" style="margin-top:10px">
+      <div class="hda-result__head">
         <img data-el="thumb" class="hda-result__thumb" alt="">
         <div class="hda-result__main">
           <p class="hda-result__label" data-el="resultLabel">判定結果</p>
           <p class="hda-result__name" data-el="resultName">—</p>
           <p class="hda-result__tag" data-el="resultTag"></p>
-          <div class="hda-result__conf"><span>AI確信度</span><div class="hda-bar"><i data-el="confBar"></i></div><b data-el="confPct">—</b></div>
         </div>
-        <p class="hda-result__reason" data-el="resultReason"></p>
       </div>
-      <p class="hda-panel__lead hda-panel__lead--sm" data-el="typesLead">違う種類なら、タップして選び直してください。</p>
-      <div class="hda-types" data-el="types">
-        <button type="button" class="hda-type" data-type="hachi">
-          <span class="hda-type__swatch hda-type__swatch--hachi"><i></i></span>
-          <span class="hda-type__name">8割銅線</span>
-          <span class="hda-type__desc">黒色・断面の銅率 約80%</span>
-          <span class="hda-type__price"><b data-price="hachi"></b>円/kg</span>
-        </button>
-        <button type="button" class="hda-type" data-type="roku">
-          <span class="hda-type__swatch hda-type__swatch--roku"><i></i></span>
-          <span class="hda-type__name">6割銅線</span>
-          <span class="hda-type__desc">黒色・断面の銅率 約60%</span>
-          <span class="hda-type__price"><b data-price="roku"></b>円/kg</span>
-        </button>
-        <button type="button" class="hda-type" data-type="f">
-          <span class="hda-type__swatch hda-type__swatch--f"><i></i></span>
-          <span class="hda-type__name">Fケーブル（VA線）</span>
-          <span class="hda-type__desc">灰色・平たい形</span>
-          <span class="hda-type__price"><b data-price="f"></b>円/kg</span>
-        </button>
-      </div>
-      <button type="button" class="hda-btn hda-btn--primary hda-btn--big" data-el="toWeight" disabled>この種類で重量を入力</button>
-      <button type="button" class="hda-btn hda-btn--text" data-el="retake">← 写真を撮り直す</button>
-    </section>
+      <div class="hda-result__conf"><span>AI確信度</span><div class="hda-bar"><i data-el="confBar"></i></div><b data-el="confPct">—</b></div>
+      <p class="hda-result__reason" data-el="resultReason"></p>
+    </div>
+    <p class="hda-panel__lead hda-panel__lead--sm">違う種類なら、タップして選び直してください。</p>
+    <div class="hda-types" data-el="types">
+      <button type="button" class="hda-type" data-type="hachi">
+        <span class="hda-type__swatch hda-type__swatch--hachi"><i></i></span>
+        <span class="hda-type__name">8割銅線</span>
+        <span class="hda-type__desc">黒色・断面の銅率 約80%</span>
+        <span class="hda-type__price"><b data-price="hachi"></b>円/kg</span>
+      </button>
+      <button type="button" class="hda-type" data-type="roku">
+        <span class="hda-type__swatch hda-type__swatch--roku"><i></i></span>
+        <span class="hda-type__name">6割銅線</span>
+        <span class="hda-type__desc">黒色・断面の銅率 約60%</span>
+        <span class="hda-type__price"><b data-price="roku"></b>円/kg</span>
+      </button>
+      <button type="button" class="hda-type" data-type="f">
+        <span class="hda-type__swatch hda-type__swatch--f"><i></i></span>
+        <span class="hda-type__name">Fケーブル（VA線）</span>
+        <span class="hda-type__desc">灰色・平たい形</span>
+        <span class="hda-type__price"><b data-price="f"></b>円/kg</span>
+      </button>
+    </div>
+    <button type="button" class="hda-btn hda-btn--primary hda-btn--big" data-el="toWeight" disabled>この種類で重量を入力</button>
+    <button type="button" class="hda-btn hda-btn--text" data-el="retake">← 写真を撮り直す</button>
+  </section>
 
-    <!-- STEP 3 -->
-    <section class="hda-panel" data-step="3">
-      <h3 class="hda-panel__title"><span class="hda-panel__num">STEP 3</span>重量を入力</h3>
-      <p class="hda-chosen" data-el="chosen"></p>
-      <span class="hda-label">重量<small>おおよそでOK（0.1kg単位）</small></span>
-      <div class="hda-weight">
-        <button type="button" class="hda-weight__btn" data-delta="-1" aria-label="1kg減らす">−</button>
-        <div class="hda-weight__field"><input type="number" data-el="weight" inputmode="decimal" min="0.1" step="0.1" value="10" aria-label="重量（kg）"><span class="hda-weight__unit">kg</span></div>
-        <button type="button" class="hda-weight__btn" data-delta="1" aria-label="1kg増やす">＋</button>
-      </div>
-      <div class="hda-chips" data-el="chips">
-        <button type="button" data-w="5">5kg</button><button type="button" data-w="10">10kg</button><button type="button" data-w="20">20kg</button><button type="button" data-w="50">50kg</button><button type="button" data-w="100">100kg</button>
-      </div>
-      <p class="hda-weight__hint">袋・ドラムごとの重さでも構いません。</p>
-      <button type="button" class="hda-btn hda-btn--primary hda-btn--big hda-btn--pulse" data-el="start">AIサイボーグ中村に査定してもらう</button>
-      <button type="button" class="hda-btn hda-btn--text" data-el="backToType">← 種類を選び直す</button>
-    </section>
+  <!-- STEP 3 -->
+  <section class="hda-panel" data-step="3">
+    <h3 class="hda-panel__title"><span class="hda-panel__num">STEP 3</span>重量を入力</h3>
+    <p class="hda-chosen" data-el="chosen"></p>
+    <span class="hda-label">重量<small>おおよそでOK（0.1kg単位）</small></span>
+    <div class="hda-weight">
+      <button type="button" class="hda-weight__btn" data-delta="-1" aria-label="1kg減らす">−</button>
+      <div class="hda-weight__field"><input type="number" data-el="weight" inputmode="decimal" min="0.1" step="0.1" value="10" aria-label="重量（kg）"><span class="hda-weight__unit">kg</span></div>
+      <button type="button" class="hda-weight__btn" data-delta="1" aria-label="1kg増やす">＋</button>
+    </div>
+    <div class="hda-chips" data-el="chips">
+      <button type="button" data-w="5">5kg</button><button type="button" data-w="10">10kg</button><button type="button" data-w="20">20kg</button><button type="button" data-w="50">50kg</button><button type="button" data-w="100">100kg</button>
+    </div>
+    <p class="hda-weight__hint">袋・ドラムごとの重さでも構いません。</p>
+    <button type="button" class="hda-btn hda-btn--primary hda-btn--big hda-btn--pulse" data-el="start">🎰 査定スタート！</button>
+    <button type="button" class="hda-btn hda-btn--text" data-el="backToType">← 種類を選び直す</button>
+  </section>
 
-    <!-- STEP 4 -->
-    <section class="hda-panel" data-step="4">
-      <h3 class="hda-panel__title"><span class="hda-panel__num">STEP 4</span>査定結果</h3>
-      <div class="hda-card" data-el="slot">
-        <div class="hda-card__left">
-          <img data-el="thumb2" class="hda-card__thumb" src="${IMG}wire-product.jpg" alt="">
-          <div>
-            <p class="hda-card__name" data-el="cardName">—</p>
-            <dl class="hda-card__rows">
-              <div><dt>種類</dt><dd data-el="rType">—</dd></div>
-              <div><dt>重量</dt><dd data-el="rWeight">—</dd></div>
-              <div><dt>買取単価</dt><dd data-el="rPrice">—</dd></div>
-            </dl>
-          </div>
+  <!-- STEP 4 -->
+  <section class="hda-panel hda-panel--slot" data-step="4">
+    <div class="hda-slot" data-el="slot">
+      <div class="hda-slot__top">
+        <img src="${IMG}happy-logo.png" class="hda-slot__toplogo" alt="">
+        <span class="hda-slot__title">買取概算金額</span>
+        <button type="button" class="hda-sound" data-el="sound" aria-pressed="false" title="効果音">🔇</button>
+      </div>
+      <div class="hda-slot__reelpanel">
+        <div class="hda-lamps" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="hda-slot__window">
+          <span class="hda-slot__payline" aria-hidden="true"></span>
+          <span class="hda-slot__yen">¥</span><div class="hda-reels" data-el="reels"></div>
         </div>
-        <div class="hda-price" data-el="price">
-          <p class="hda-price__label">推定買取価格</p>
-          <div class="hda-price__amount"><span class="hda-price__yen">¥</span><div class="hda-reels" data-el="reels"></div></div>
-          <p class="hda-price__note">※実際の査定額は現物確認により変動する場合があります。</p>
+        <div class="hda-lamps hda-lamps--bottom" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="hda-slot__deck">
+        <div class="hda-gogo" data-el="gogo" aria-label="ハッピーランプ">
+          <span class="hda-gogo__flash"></span>
+          <img src="${IMG}happy-logo.png" class="hda-gogo__logo" alt="ハッピー">
+          <span class="hda-gogo__chance">CHANCE</span>
+        </div>
+        <div class="hda-led">
+          <div class="hda-led__item"><span>WEIGHT</span><b data-el="ledKg">--</b><i>kg</i></div>
+          <div class="hda-led__item"><span>PRICE</span><b data-el="ledPrice">----</b><i>円/kg</i></div>
         </div>
       </div>
-      <div class="hda-verdict" data-el="msg" hidden>
-        <img src="${IMG}robot-icon.jpg" alt="">
+      <p class="hda-slot__formula" data-el="formula"></p>
+      <div class="hda-slot__controls">
+        <div class="hda-slot__buttons" aria-hidden="true">
+          <span class="hda-bet">MAX<br>BET</span>
+          <i class="hda-stop hda-stop--r" data-el="stop1"></i>
+          <i class="hda-stop hda-stop--y" data-el="stop2"></i>
+          <i class="hda-stop hda-stop--g" data-el="stop3"></i>
+        </div>
+        <button type="button" class="hda-btn hda-btn--primary hda-btn--big hda-respin" data-el="respin">
+          <span class="hda-respin__knob" aria-hidden="true"></span>
+          <span>もう一度試す<small>レバーON！ランプを再抽選</small></span>
+        </button>
+      </div>
+      <div class="hda-slot__msg" data-el="msg" hidden>
+        <img src="${IMG}nakamura-cheer.png" alt="">
         <p data-el="msgText"></p>
       </div>
-      <div class="hda-happy" data-el="happy" hidden aria-live="polite">
-        <img class="hda-happy__neon" src="${IMG}neon-happy.jpg" alt="いい電線だ！ハッピー価格で I'LL BE BACK">
-        <img class="hda-happy__chara" src="${IMG}nakamura-thumbsup.jpg" alt="">
-      </div>
-      <div class="hda-actions">
-        <button type="button" class="hda-btn hda-btn--primary hda-btn--big" data-el="respin">もう一度査定する<small>ハッピー価格を再抽選</small></button>
-        <button type="button" class="hda-btn hda-btn--outline hda-btn--big" data-el="again">別の電線を査定する</button>
-      </div>
-      <p class="hda-disclaimer">※概算です。実際の買取金額は店頭での計量・状態確認と当日の相場で決まります。ネオンサインの点灯は演出で、金額には影響しません。</p>
-    </section>
-  </div>
-
-  <aside class="hda-side" aria-hidden="true">
-    <div class="hda-side__chara">
-      <img data-el="sideChara" src="${IMG}nakamura-cables.jpg" alt="">
-      <img class="hda-side__neon" data-el="sideNeon" src="${IMG}neon-happy.jpg" alt="" hidden>
     </div>
-    <div class="hda-bubble"><img src="${IMG}robot-icon.jpg" alt=""><p><em>AI</em>が<br>すぐに査定するぞ！</p></div>
-    <ul class="hda-checks">
-      <li>写真から電線の種類を自動判定</li>
-      <li>断面・被覆から銅率を推定</li>
-      <li>最新の買取単価で即査定</li>
-      <li>店舗持込・宅配どちらもOK</li>
-    </ul>
-    <p class="hda-side__vert">現場がハッピー。<br>地球もハッピー。<br>電線もハッピー。</p>
-  </aside>
-
-  <section class="hda-features" aria-label="特徴">
-    <div class="hda-feature"><img src="${IMG}icon-speed.png" alt=""><div><b>かんたん<br>スピード査定</b><small>写真を送るだけで即結果！</small></div></div>
-    <div class="hda-feature"><img src="${IMG}icon-recycle.png" alt=""><div><b>環境にやさしい<br>リサイクル</b><small>資源をつなぎ、未来をつくる。</small></div></div>
-    <div class="hda-feature"><img src="${IMG}icon-price.png" alt=""><div><b>高価買取</b><small>相場に基づく適正価格</small></div></div>
-    <div class="hda-feature"><img src="${IMG}icon-delivery.png" alt=""><div><b>持込・宅配<br>どちらも対応</b><small>全国対応・大量もOK</small></div></div>
+    <p class="hda-disclaimer">※概算です。実際の買取金額は店頭での計量・状態確認と当日の相場で決まります。ハッピーランプは演出で、金額には影響しません。</p>
+    <button type="button" class="hda-btn hda-btn--outline hda-btn--big hda-again" data-el="again">別の電線を査定する</button>
   </section>
-
-  <section class="hda-flow" aria-label="査定の流れ">
-    <h3 class="hda-flow__title">査定の流れ</h3>
-    <ol class="hda-flow__grid">
-      <li class="hda-flow__step"><span class="hda-flow__num">01</span><span class="hda-flow__icon"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="5" y="13" width="38" height="27" rx="4" fill="none" stroke="currentColor" stroke-width="3"/><path d="M17 13l3-5h8l3 5" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="24" cy="26" r="7" fill="none" stroke="currentColor" stroke-width="3"/></svg></span><p>写真をアップロード<small>または重量を入力</small></p></li>
-      <li class="hda-flow__step"><span class="hda-flow__num">02</span><span class="hda-flow__icon"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="10" y="10" width="28" height="28" rx="5" fill="none" stroke="currentColor" stroke-width="3"/><text x="24" y="30" text-anchor="middle" font-family="Jost, sans-serif" font-weight="800" font-size="15" fill="currentColor">AI</text><path d="M17 4v6M24 4v6M31 4v6M17 38v6M24 38v6M31 38v6M4 17h6M4 24h6M4 31h6M38 17h6M38 24h6M38 31h6" stroke="currentColor" stroke-width="3"/></svg></span><p>AIが電線を解析<small>種類・銅率を判定</small></p></li>
-      <li class="hda-flow__step"><span class="hda-flow__num">03</span><span class="hda-flow__icon"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="9" y="5" width="30" height="38" rx="3" fill="none" stroke="currentColor" stroke-width="3"/><path d="M18 15l6 8 6-8M24 23v12M18 29h12M18 34h12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span><p>査定結果をすぐに表示<small>買取価格をご案内</small></p></li>
-      <li class="hda-flow__step"><span class="hda-flow__num">04</span><span class="hda-flow__icon"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="6" width="36" height="36" rx="9" fill="#06c755"/><text x="24" y="29" text-anchor="middle" font-family="Jost, sans-serif" font-weight="800" font-size="13" fill="#fff">LINE</text></svg></span><p>LINEで申込 or<small>店舗・宅配で買取</small></p></li>
-    </ol>
-    <a class="hda-line" data-el="lineLink" href="#" target="_blank" rel="noopener"><span class="hda-line__icon">LINE</span><span>LINEで<br>今すぐ査定！</span><span aria-hidden="true">→</span></a>
-  </section>
-  </div>
   `;
 
   /* ---------------- 本体 ---------------- */
@@ -555,81 +525,76 @@
       });
     }
 
-    // ハッピー演出: ネオンサインが光り、サムズアップ中村が出現（PCは横の中村さんが入れ替わる）
-    async function igniteHappy() {
+    // HAPPYランプ点灯（ペカッ）: 一瞬ちらついてから点きっぱなし
+    async function igniteGogo() {
+      const g = el("gogo");
       Sound.peka();
-      const happy = el("happy");
-      happy.hidden = false;
-      const side = el("sideChara"), neon = el("sideNeon");
-      side.classList.remove("is-swapping");
-      side.src = IMG + "nakamura-thumbsup.jpg";
-      void side.offsetWidth;
-      side.classList.add("is-swapping");
-      neon.hidden = false;
-      root.classList.add("is-happy");
+      g.classList.add("is-flash");
+      g.classList.add("is-on"); await sleep(70);
+      g.classList.remove("is-on"); await sleep(60);
+      g.classList.add("is-on"); await sleep(50);
+      g.classList.remove("is-on"); await sleep(40);
+      g.classList.add("is-on");
       vibrate([30, 30, 120]);
-    }
-    function resetHappy() {
-      el("happy").hidden = true;
-      el("sideNeon").hidden = true;
-      const side = el("sideChara");
-      side.classList.remove("is-swapping");
-      side.src = IMG + "nakamura-cables.jpg";
-      root.classList.remove("is-happy");
+      setTimeout(() => g.classList.remove("is-flash"), 600);
     }
 
     async function spin() {
       if (state.spinning || !state.type) return;
       state.spinning = true;
       Sound.init();
-      const card = el("slot"), price = el("price"), msg = el("msg");
+      const slot = el("slot"), gogo = el("gogo"), msg = el("msg");
       el("respin").disabled = true;
       msg.hidden = true;
-      resetHappy();
-      price.classList.add("is-spinning");
+      gogo.classList.remove("is-on", "is-flash");
+      slot.classList.remove("is-win", "is-shake");
+      slot.classList.add("is-spinning");
 
-      // 抽選: 毎回ランダム。当たりならリールが回り始めた瞬間にネオン点灯
+      // 抽選: 毎回ランダム。当たりならリールが回り始めた瞬間に点灯
       const chance = typeof CFG.happyChance === "number" ? CFG.happyChance : typeof CFG.gogoChance === "number" ? CFG.gogoChance : .33;
       const peka = forcedGogo === "1" ? true : forcedGogo === "0" ? false : Math.random() < chance;
 
       state.amount = Math.floor(PRICES[state.type] * state.weight);
-      el("cardName").textContent = TYPES[state.type].name;
-      el("rType").textContent = TYPES[state.type].tag;
-      el("rWeight").textContent = `約 ${state.weight} kg`;
-      el("rPrice").textContent = `${yen(PRICES[state.type])} 円/kg（税込）`;
-      el("thumb2").src = state.dataUrl || (IMG + "wire-product.jpg");
+      el("formula").innerHTML = `${TYPES[state.type].name} <b>${state.weight}</b>kg × <b>${yen(PRICES[state.type])}</b>円（税込・概算）`;
+      el("ledKg").textContent = state.weight;
+      el("ledPrice").textContent = yen(PRICES[state.type]);
+      ["stop1", "stop2", "stop3"].forEach((k) => el(k).classList.remove("is-lit"));
+      el("respin").classList.add("is-pull");
+      setTimeout(() => el("respin").classList.remove("is-pull"), 260);
       buildReels(state.amount);
 
       const strips = $$("[data-el=reels] .hda-reel__strip");
-      const DIGIT_H = strips.length ? strips[0].firstElementChild.getBoundingClientRect().height || 56 : 56;
+      const DIGIT_H = strips.length ? strips[0].firstElementChild.getBoundingClientRect().height || 56 : 56; // レスポンシブで高さが変わるため実測
       strips.forEach((s) => { s.style.transition = "none"; s.style.transform = "translateY(0)"; s.classList.add("is-blur"); });
-      void card.offsetWidth;
+      void slot.offsetWidth;
 
-      if (peka) igniteHappy();
+      if (peka) igniteGogo(); // 回転開始と同時にペカッ
 
       const base = 1300, stagger = 380;
       const ticker = setInterval(() => Sound.tick(), 90);
+      const stopMap = { 0: "stop1", [Math.floor((strips.length - 1) / 2)]: "stop2", [strips.length - 1]: "stop3" };
       strips.forEach((s, i) => {
         const dur = base + i * stagger;
         s.style.transition = `transform ${dur}ms cubic-bezier(.12,.75,.25,1.04)`;
         s.style.transform = `translateY(-${(+s.dataset.target) * DIGIT_H}px)`;
-        setTimeout(() => { s.classList.remove("is-blur"); Sound.stop(); }, dur);
+        setTimeout(() => { s.classList.remove("is-blur"); Sound.stop(); if (stopMap[i]) el(stopMap[i]).classList.add("is-lit"); }, dur);
       });
       await sleep(base + (strips.length - 1) * stagger + 80);
       clearInterval(ticker);
-      price.classList.remove("is-spinning");
+      slot.classList.remove("is-spinning");
 
       if (peka) {
-        el("msgText").innerHTML = "<b>いい電線だ！ハッピー価格だぞ！</b>AIサイボーグ中村もサムズアップの買取目安です";
+        slot.classList.add("is-win", "is-shake");
+        el("msgText").innerHTML = "<b>ペカッ！大当たり〜！</b><br>ハッピー中村もビックリの買取目安です";
         msg.classList.add("is-peka");
         Sound.win();
-        confetti(card, 170);
+        confetti(slot, 170);
         vibrate([60, 40, 60, 40, 160]);
       } else {
-        el("msgText").innerHTML = "<b>査定完了だ！</b>この金額がお買取りの目安だぞ";
+        el("msgText").innerHTML = "<b>査定完了！</b><br>この金額がお買取りの目安です";
         msg.classList.remove("is-peka");
         Sound.done();
-        confetti(card, 40);
+        confetti(slot, 40);
       }
       msg.hidden = false;
       el("respin").disabled = false;
@@ -673,36 +638,16 @@
 
     /* リセット */
     function resetAll() {
-      state.dataUrl = state.base64 = null; state.aiType = state.type = null; state.canvas = null;
+      state.dataUrl = state.base64 = null; state.aiType = state.type = null;
       el("preview").hidden = true; el("preview").src = "";
       el("dropInner").hidden = false;
       el("drop").classList.remove("has-image");
       el("classify").disabled = true;
       el("file").value = "";
+      el("gogo").classList.remove("is-on", "is-flash");
+      el("slot").classList.remove("is-win", "is-spinning");
       el("msg").hidden = true;
-      el("price").classList.remove("is-spinning");
-      resetHappy();
-      setTab("photo");
       goStep(1);
-    }
-
-    /* タブ: 写真で査定 / 重さで査定 */
-    function setTab(mode) {
-      const photo = mode === "photo";
-      el("tabPhoto").classList.toggle("is-active", photo); el("tabPhoto").setAttribute("aria-selected", String(photo));
-      el("tabWeight").classList.toggle("is-active", !photo); el("tabWeight").setAttribute("aria-selected", String(!photo));
-    }
-    function startWeightMode() {
-      // 写真なし: 種類を手で選んで重量入力へ
-      setTab("weight");
-      state.dataUrl = state.base64 = null; state.aiType = null;
-      el("result").hidden = true;
-      el("step2Title").textContent = "電線の種類を選ぶ";
-      el("typesLead").textContent = "お持ちの電線に近いものをタップしてください。";
-      el("retake").textContent = "← 写真で査定に切り替える";
-      $$("[data-el=types] .hda-type").forEach((b) => b.classList.remove("is-ai"));
-      setType(state.type);
-      goStep(2);
     }
 
     /* イベント */
@@ -715,16 +660,7 @@
     ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("is-over"); }));
     drop.addEventListener("drop", (e) => { const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f) handleFile(f); });
 
-    el("tabPhoto").addEventListener("click", () => { if (state.spinning) return; resetAll(); });
-    el("tabWeight").addEventListener("click", () => { if (state.spinning) return; startWeightMode(); });
-
-    el("classify").addEventListener("click", () => {
-      el("result").hidden = false;
-      el("step2Title").textContent = "AI判定結果";
-      el("typesLead").textContent = "違う種類なら、タップして選び直してください。";
-      el("retake").textContent = "← 写真を撮り直す";
-      runClassify();
-    });
+    el("classify").addEventListener("click", runClassify);
     $$("[data-el=types] .hda-type").forEach((b) => b.addEventListener("click", () => setType(b.dataset.type)));
     el("toWeight").addEventListener("click", () => { setWeight(state.weight); goStep(3); });
     el("retake").addEventListener("click", resetAll);
@@ -744,7 +680,6 @@
       setTimeout(spin, 350);
     });
     el("respin").addEventListener("click", spin);
-    el("again").addEventListener("click", resetAll);
     // 画面幅が変わってリールの高さが変わったら、停止位置を取り直す
     window.addEventListener("resize", () => {
       if (state.spinning) return;
@@ -753,6 +688,7 @@
         if (hgt && s.dataset.target) { s.style.transition = "none"; s.style.transform = `translateY(-${(+s.dataset.target) * hgt}px)`; }
       });
     });
+    el("again").addEventListener("click", resetAll);
 
     const sb = el("sound");
     try { Sound.on = localStorage.getItem("hd_sound") === "1"; } catch (_) {}
@@ -763,9 +699,6 @@
       try { localStorage.setItem("hd_sound", Sound.on ? "1" : "0"); } catch (_) {}
       if (Sound.on) Sound.stop();
     });
-
-    // LINEボタン（config.lineUrl が無ければ非表示）
-    if (CFG.lineUrl) el("lineLink").href = CFG.lineUrl; else el("lineLink").hidden = true;
 
     renderPrices();
     fetchRemotePrices();
