@@ -1,11 +1,12 @@
 /* =====================================================================
- * ハッピーデンセン AI自動査定ウィジェット — 埋め込みスクリプト
+ * ハッピーデンセン AI自動査定ウィジェット — 埋め込みスクリプト（デザイン再現版）
  *
  *   <div id="happy-assess"></div>
- *   <script src="https://lp.used-cable.net/assess/embed.js" defer></script>
+ *   <script src="https://<公式サイト>/assess/embed.js" defer></script>
  *
- * だけでLPのどこにでも差し込めます。style.css / config.js / img/ は
- * embed.js と同じフォルダから自動で読み込みます。
+ * 4画面構成: 査定前(upload) → AI解析(analyze) → 査定結果 通常(result) / 最強(jackpot)
+ * 固定幅1120pxのキャンバスを、置かれた枠の幅に合わせて縮小表示する。
+ * style.css / config.js / img/ は embed.js と同じフォルダから自動で読み込む。
  * ===================================================================== */
 (() => {
   "use strict";
@@ -13,10 +14,13 @@
   const SCRIPT = document.currentScript;
   const BASE = SCRIPT && SCRIPT.src ? SCRIPT.src.replace(/[^/]*$/, "") : "";
   const IMG = BASE + "img/";
+  // 画像パス解決（共有用ビルドでは window.HAPPY_ASSETS に data URI が入る）
+  const asset = (name) => (window.HAPPY_ASSETS && window.HAPPY_ASSETS[name]) || (IMG + name);
+  const CANVAS_W = 840;
 
   /* ---------------- 依存の読み込み ---------------- */
   function loadCss() {
-    if (document.querySelector('link[data-hda-css]')) return;
+    if (document.querySelector('[data-hda-css]')) return;
     const l = document.createElement("link");
     l.rel = "stylesheet";
     l.href = BASE + "style.css";
@@ -25,7 +29,7 @@
   }
   function loadFonts() {
     const has = Array.from(document.querySelectorAll('link[rel=stylesheet]')).some((l) => /fonts\.googleapis\.com.*Jost/.test(l.href));
-    if (has) return; // LP側で既に読み込み済み
+    if (has) return;
     const l = document.createElement("link");
     l.rel = "stylesheet";
     l.href = "https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,500;0,700;0,800;1,800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap";
@@ -40,168 +44,219 @@
     document.head.appendChild(s);
   }
 
+  /* ---------------- 共通パーツ ---------------- */
+  const ICON_CAMERA = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="5" y="13" width="38" height="27" rx="4" fill="none" stroke="currentColor" stroke-width="3"/><path d="M17 13l3-5h8l3 5" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="24" cy="26" r="7" fill="none" stroke="currentColor" stroke-width="3"/></svg>';
+  const ICON_AI = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="10" y="10" width="28" height="28" rx="5" fill="none" stroke="currentColor" stroke-width="3"/><text x="24" y="30" text-anchor="middle" font-family="Jost, sans-serif" font-weight="800" font-size="15" fill="currentColor">AI</text><path d="M17 4v6M24 4v6M31 4v6M17 38v6M24 38v6M31 38v6M4 17h6M4 24h6M4 31h6M38 17h6M38 24h6M38 31h6" stroke="currentColor" stroke-width="3"/></svg>';
+  const ICON_DOC = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="9" y="5" width="30" height="38" rx="3" fill="none" stroke="currentColor" stroke-width="3"/><path d="M16 16h16M16 24h16M16 32h10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
+  const ICON_LINE = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="6" width="36" height="36" rx="9" fill="#06c755"/><text x="24" y="29" text-anchor="middle" font-family="Jost, sans-serif" font-weight="800" font-size="13" fill="#fff">LINE</text></svg>';
+
+  const stepsHtml = (active) => `
+    <div class="hda-steps">
+      <div class="hda-step ${active > 1 ? "is-done" : active === 1 ? "is-active" : ""}"><span class="hda-step__icon">${ICON_CAMERA}</span><span class="hda-step__pill">写真をアップロード</span></div>
+      <span class="hda-steps__arrow">›</span>
+      <div class="hda-step ${active > 2 ? "is-done" : active === 2 ? "is-active" : ""}"><span class="hda-step__icon">${ICON_AI}</span><span class="hda-step__pill">AI解析</span></div>
+      <span class="hda-steps__arrow">›</span>
+      <div class="hda-step ${active === 3 ? "is-active" : ""}"><span class="hda-step__icon">${ICON_DOC}</span><span class="hda-step__pill">査定結果</span></div>
+    </div>`;
+
+  const sideDeco = `
+    <img class="hda-abs hda-title" src="${asset("title.jpg")}" alt="AIサイボーグ中村の電線自動査定">
+    <p class="hda-abs hda-recycle">RECYCLE<br>REUSE<br>CONNECT<br>TO<br>TOMORROW</p>`;
+
+  const featuresHtml = (four) => `
+    <section class="hda-abs hda-features ${four ? "" : "hda-features--3"}" aria-label="特徴">
+      <div class="hda-feature"><img src="${asset("icon-speed.png")}" alt=""><div><b>かんたん${four ? "<br>スピード査定" : "査定"}</b><small>写真を送るだけで${four ? "即結果！" : "OK"}</small></div></div>
+      <div class="hda-feature"><img src="${asset("icon-recycle.png")}" alt=""><div><b>${four ? "環境にやさしい<br>" : ""}リサイクル</b><small>資源をつなぎ、未来をつくる。</small></div></div>
+      ${four ? `<div class="hda-feature"><img src="${asset("icon-price.png")}" alt=""><div><b>高価買取</b><small>相場に基づく適正価格</small></div></div>` : ""}
+      <div class="hda-feature"><img src="${asset("icon-delivery.png")}" alt=""><div><b>持込・宅配${four ? "<br>どちらも" : ""}対応</b><small>全国対応・大量もOK</small></div></div>
+    </section>`;
+
   /* ---------------- テンプレート ---------------- */
   const TEMPLATE = `
-  <div class="hda-head">
-    <p class="hda-head__tag">＼ 写真を撮るだけ・約10秒 ／</p>
-    <h2 class="hda-head__title"><span class="hda-head__ai">AI</span>が電線を見分けて<br><em>買取金額</em>をズバッと概算！</h2>
-    <div class="hda-head__body">
-      <p class="hda-head__lead">8割銅線 <b data-price="hachi"></b>円<br>6割銅線 <b data-price="roku"></b>円<br>Fケーブル <b data-price="f"></b>円<small>税込・1kgあたり</small></p>
-      <img src="${IMG}nakamura-point.png" class="hda-head__chara" alt="">
-    </div>
+  <button type="button" class="hda-sound" data-el="sound" aria-pressed="false" aria-label="効果音の切り替え" title="効果音">🔇</button>
+  <div class="hda-canvas" data-el="canvas">
+
+    <!-- ========== 画面A: 査定前 ========== -->
+    <section class="hda-screen hda-screen--upload" data-screen="upload">
+      <div class="hda-screen__bg"><img src="${asset("bg-warehouse.jpg")}" alt=""></div>
+      ${sideDeco}
+      <p class="hda-abs hda-lead">写真を撮って、送るだけ。<br>あなたの電線をAIが瞬時に査定！</p>
+      <img class="hda-abs hda-chara hda-chara--main" src="${asset("nakamura-full1.png")}" alt="">
+      <div class="hda-abs hda-bubble hda-bubble--ai hda-bubble--tail-right"><img src="${asset("robot-icon.jpg")}" alt=""><span><em>AI</em>が<br>すぐに査定するぞ！</span></div>
+      <ul class="hda-abs hda-checks">
+        <li>断面の写真から種類を自動判定</li>
+        <li>8割・6割・Fケーブルを判別</li>
+        <li>最新の買取単価で即査定</li>
+        <li>LINEでかんたん申込</li>
+      </ul>
+
+      <div class="hda-abs hda-upload">
+        <label class="hda-drop" data-el="drop">
+          <input type="file" data-el="file" accept="image/*" hidden>
+          <div class="hda-drop__inner" data-el="dropInner">
+            <img class="hda-drop__icon" src="${asset("upload-icon.png")}" alt="">
+            <p class="hda-drop__text">電線の写真をドラッグ＆ドロップ</p>
+            <p class="hda-drop__sub">または <u>タップして撮影・画像を選択</u></p>
+            <p class="hda-drop__note">※ 被覆の色と断面（切り口）が見えるように撮ってください（1枚でOK）</p>
+          </div>
+          <img data-el="preview" class="hda-drop__preview" alt="" hidden>
+          <div class="hda-scan" data-el="scan" hidden>
+            <div class="hda-scan__line"></div>
+            <div class="hda-scan__corner hda-scan__corner--tl"></div><div class="hda-scan__corner hda-scan__corner--tr"></div>
+            <div class="hda-scan__corner hda-scan__corner--bl"></div><div class="hda-scan__corner hda-scan__corner--br"></div>
+            <p class="hda-scan__text"><img src="${asset("robot-icon.jpg")}" alt="">AI中村が解析中<span class="hda-dots"><i>.</i><i>.</i><i>.</i></span></p>
+          </div>
+        </label>
+        <p class="hda-examples__title">断面（切り口）が見える写真でOK！</p>
+        <div class="hda-examples__row hda-examples__row--3">
+          <figure><img src="${asset("ex-hachi.jpg")}" alt=""><figcaption>8割銅線<small>黒色・銅が太い</small></figcaption></figure>
+          <figure><img src="${asset("ex-roku.jpg")}" alt=""><figcaption>6割銅線<small>黒色・芯線が複数</small></figcaption></figure>
+          <figure><img src="${asset("ex-f.jpg")}" alt=""><figcaption>Fケーブル<small>灰色・平たい</small></figcaption></figure>
+        </div>
+        <button type="button" class="hda-btn hda-btn--yellow" data-el="classify" disabled>AIで査定する</button>
+      </div>
+
+      <section class="hda-abs hda-example" aria-label="査定結果の一例">
+        <p class="hda-example__title">査定結果の一例</p>
+        <div class="hda-example__card">
+          <img src="${asset("ex-hachi.jpg")}" alt="">
+          <div>
+            <p class="hda-example__name">8割銅線（CVケーブル）</p>
+            <dl class="hda-example__rows">
+              <div><dt>種類</dt><dd>黒色・銅率 約80%</dd></div>
+              <div><dt>重量</dt><dd>約 20 kg</dd></div>
+              <div><dt>単価</dt><dd data-el="exPrice"></dd></div>
+            </dl>
+          </div>
+          <div class="hda-example__price"><span>参考査定金額</span><b data-el="exAmount"></b></div>
+          <small class="hda-example__note">※実際の査定額は現物確認により変動する場合があります。</small>
+        </div>
+      </section>
+
+      ${featuresHtml(true)}
+
+      <section class="hda-abs hda-flow" aria-label="査定の流れ">
+        <p class="hda-flow__title">査定の流れ</p>
+        <div class="hda-flow__inner">
+          <ol class="hda-flow__grid">
+            <li class="hda-flow__step"><span class="hda-flow__num">01</span><span class="hda-flow__icon">${ICON_CAMERA}</span><p>写真をアップロード<small>または重量を入力</small></p></li>
+            <li class="hda-flow__step"><span class="hda-flow__num">02</span><span class="hda-flow__icon">${ICON_AI}</span><p>AIが電線を解析<small>種類・銅率を判定</small></p></li>
+            <li class="hda-flow__step"><span class="hda-flow__num">03</span><span class="hda-flow__icon">${ICON_DOC}</span><p>査定結果をすぐに表示<small>買取価格をご案内</small></p></li>
+            <li class="hda-flow__step"><span class="hda-flow__num">04</span><span class="hda-flow__icon">${ICON_LINE}</span><p>LINEで申込 or<small>店舗・宅配で買取</small></p></li>
+          </ol>
+          <a class="hda-btn hda-btn--line" data-el="lineLink1" href="#" target="_blank" rel="noopener"><span class="hda-line__icon">LINE</span><span>LINEで<br>今すぐ査定！</span><span class="hda-chev" aria-hidden="true">→</span></a>
+        </div>
+      </section>
+    </section>
+
+    <!-- ========== 画面B: AI解析（種類の確認 + 重量入力） ========== -->
+    <section class="hda-screen hda-screen--analyze" data-screen="analyze" hidden>
+      <div class="hda-screen__bg"><img src="${asset("bg-warehouse.jpg")}" alt=""></div>
+      ${sideDeco}
+      <img class="hda-abs hda-chara hda-chara--main" src="${asset("nakamura-full1.png")}" alt="">
+      <div class="hda-abs hda-bubble hda-bubble--ai"><img src="${asset("robot-icon.jpg")}" alt=""><span data-el="analyzeBubble"><em>AI</em>解析が<br>完了したぞ！</span></div>
+      <div class="hda-abs hda-steps-wrap hda-steps" data-el="steps2">${stepsHtml(2).replace('<div class="hda-steps">', "").replace(/<\/div>\s*$/, "")}</div>
+      <h2 class="hda-abs hda-h1" data-el="analyzeTitle">AI解析が完了しました！<span class="hda-h1sub" data-el="analyzeSub">種類を確認して、重量を入力してください。</span></h2>
+      <div class="hda-abs hda-panel">
+        <div class="hda-panel__head" data-el="resultHead"><span class="hda-check">✓</span><span data-el="resultHeadText">AI解析完了</span></div>
+        <div class="hda-result" data-el="result">
+          <img data-el="thumb" class="hda-result__thumb" alt="">
+          <div>
+            <p class="hda-result__name" data-el="resultName">—</p>
+            <p class="hda-result__tag" data-el="resultTag"></p>
+            <div class="hda-result__conf"><span>AI確信度</span><div class="hda-bar"><i data-el="confBar"></i></div><b data-el="confPct">—</b></div>
+            <p class="hda-result__reason" data-el="resultReason"></p>
+          </div>
+        </div>
+        <p class="hda-panel__lead" data-el="typesLead">違う種類なら、タップして選び直してください。</p>
+        <div class="hda-types" data-el="types">
+          <button type="button" class="hda-type" data-type="hachi"><span class="hda-type__swatch hda-type__swatch--hachi"><i></i></span><span class="hda-type__name">8割銅線</span><span class="hda-type__desc">黒色・断面の銅率 約80%</span><span class="hda-type__price"><b data-price="hachi"></b>円/kg</span></button>
+          <button type="button" class="hda-type" data-type="roku"><span class="hda-type__swatch hda-type__swatch--roku"><i></i></span><span class="hda-type__name">6割銅線</span><span class="hda-type__desc">黒色・断面の銅率 約60%</span><span class="hda-type__price"><b data-price="roku"></b>円/kg</span></button>
+          <button type="button" class="hda-type" data-type="f"><span class="hda-type__swatch hda-type__swatch--f"><i></i></span><span class="hda-type__name">Fケーブル（VA線）</span><span class="hda-type__desc">灰色・平たい形</span><span class="hda-type__price"><b data-price="f"></b>円/kg</span></button>
+        </div>
+        <div class="hda-weightrow">
+          <div>
+            <span class="hda-label">重量<small>おおよそでOK（0.1kg単位）</small></span>
+            <div class="hda-weight">
+              <button type="button" class="hda-weight__btn" data-delta="-1" aria-label="1kg減らす">−</button>
+              <div class="hda-weight__field"><input type="number" data-el="weight" inputmode="decimal" min="0.1" step="0.1" value="10" aria-label="重量（kg）"><span class="hda-weight__unit">kg</span></div>
+              <button type="button" class="hda-weight__btn" data-delta="1" aria-label="1kg増やす">＋</button>
+            </div>
+            <div class="hda-chips" data-el="chips"><button type="button" data-w="5">5kg</button><button type="button" data-w="10">10kg</button><button type="button" data-w="20">20kg</button><button type="button" data-w="50">50kg</button><button type="button" data-w="100">100kg</button></div>
+          </div>
+          <button type="button" class="hda-btn hda-btn--yellow hda-btn--pulse" data-el="start" disabled>査定結果を見る →</button>
+        </div>
+        <div class="hda-panel__foot">
+          <span>単価はすべて税込・1kgあたり。袋・ドラムごとの重さでも構いません。</span>
+          <button type="button" class="hda-linkbtn" data-el="retake">← 写真を撮り直す</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 画面C: 査定結果・通常 ========== -->
+    <section class="hda-screen hda-screen--result" data-screen="result" hidden>
+      <div class="hda-screen__bg"><img src="${asset("bg-warehouse.jpg")}" alt=""></div>
+      ${sideDeco}
+      <img class="hda-abs hda-chara hda-chara--main hda-chara--thumbs" src="${asset("nakamura-full2.png")}" alt="">
+      <img class="hda-abs hda-neon" src="${asset("neon-happy.jpg")}" alt="いい電線だ！ハッピー価格で I'LL BE BACK">
+      <div class="hda-abs hda-steps" data-el="steps3">${stepsHtml(3).replace('<div class="hda-steps">', "").replace(/<\/div>\s*$/, "")}</div>
+      <h2 class="hda-abs hda-h1">査定が完了しました！<span class="hda-h1sub">アップロードした電線の査定結果です。</span></h2>
+      <div class="hda-abs hda-card" data-el="card">
+        <div class="hda-panel__head"><span class="hda-check">✓</span>AI解析完了</div>
+        <div class="hda-card__body">
+          <div class="hda-card__photo">
+            <img data-el="thumb2" src="${asset("ex-hachi.jpg")}" alt="">
+            <p class="hda-card__caption" data-el="cardCaption">アップロードした写真</p>
+            <p class="hda-card__name" data-el="cardName">—</p>
+            <p class="hda-card__sub" data-el="cardSub">画像から推定</p>
+          </div>
+          <div class="hda-card__price">
+            <span class="hda-price__label">参考査定金額</span>
+            <div class="hda-price__amount"><span class="hda-price__yen">¥</span><div class="hda-reels" data-el="reels"></div></div>
+            <p class="hda-price__tax">税込・概算</p>
+            <p class="hda-price__note">※表示金額は「単価 × 重量」の概算です。</p>
+          </div>
+        </div>
+      </div>
+      <div class="hda-abs hda-detail">
+        <div class="hda-detail__head">${ICON_DOC}査定内容</div>
+        <dl class="hda-detail__rows">
+          <div><dt>品目</dt><dd data-el="dType">—</dd></div>
+          <div><dt>判定方法</dt><dd data-el="dMethod">—</dd></div>
+          <div><dt>重量・単価</dt><dd data-el="dCalc">—</dd></div>
+          <div><dt>買取方法</dt><dd>持込・宅配</dd></div>
+        </dl>
+        <p class="hda-detail__note">正確な重量・状態を確認後、買取金額が確定します。</p>
+      </div>
+      <div class="hda-abs hda-line-wrap"><a class="hda-btn hda-btn--line" data-el="lineLink2" href="#" target="_blank" rel="noopener"><span class="hda-line__icon">LINE</span><span>LINEで正式査定を依頼する</span><span class="hda-chev" aria-hidden="true">›</span></a></div>
+      <div class="hda-abs hda-again-wrap"><button type="button" class="hda-btn hda-btn--ghost" data-el="again">別の写真で査定する<span class="hda-chev" aria-hidden="true">›</span></button></div>
+      ${featuresHtml(false)}
+    </section>
+
+    <!-- ========== 画面D: 査定結果・最強（大当たり） ========== -->
+    <section class="hda-screen hda-screen--jackpot" data-screen="jackpot" hidden>
+      <div class="hda-jackpot-inner">
+      <div class="hda-screen__bg"><img src="${asset("bg-cyber.jpg")}" alt=""></div>
+      <img class="hda-abs hda-cyber-logo" src="${asset("cyber-logo.png")}" alt="AIサイボーグ中村の電線自動査定">
+      <p class="hda-abs hda-recycle">RECYCLE<br>REUSE<br>CONNECT<br>TO<br>TOMORROW</p>
+      <img class="hda-abs hda-hand" src="${asset("handwritten.png")}" alt="">
+      <img class="hda-abs hda-cyborg" src="${asset("cyborg.png")}" alt="">
+      <img class="hda-abs hda-cyber-bubble" src="${asset("cyber-bubble.png")}" alt="いい値がついたぞ！">
+      <p class="hda-abs hda-future">HAPPY<br>CLEAN<br>EARTH<br>BRIGHT<br>FUTURE</p>
+      <img class="hda-abs hda-gold-fx" src="${asset("cyber-gold-fx.png")}" alt="">
+      <img class="hda-abs hda-cyber-complete" src="${asset("cyber-complete.png")}" alt="査定完了！">
+      <img class="hda-abs hda-cyber-label" src="${asset("cyber-amount-label.png")}" alt="あなたの銅線の参考査定金額">
+      <img class="hda-abs hda-cyber-frame" src="${asset("cyber-frame.png")}" alt="">
+      <div class="hda-abs hda-gold" data-el="gold" aria-label="参考査定金額"></div>
+      <img class="hda-abs hda-cyber-tax" src="${asset("cyber-tax.png")}" alt="税込・概算">
+      <img class="hda-abs hda-cyber-catch" src="${asset("cyber-catch.png")}" alt="その銅線を、価値に変えよう。">
+      <a class="hda-abs hda-cyber-line" data-el="lineLink3" href="#" target="_blank" rel="noopener"><img src="${asset("cyber-line.png")}" alt="LINEで買取を申し込む"></a>
+      <button type="button" class="hda-abs hda-cyber-retry" data-el="retry"><img src="${asset("cyber-retry.png")}" alt="もう一度査定する"></button>
+      <p class="hda-abs hda-cyber-note">※表示金額は「単価 × 重量」の概算です。実際の買取金額は現物確認後に確定します。</p>
+      </div>
+    </section>
+    <div class="hda-cutin-fx" data-el="cutinFx" hidden aria-hidden="true"><span class="hda-cutin-fx__flash"></span><span class="hda-cutin-fx__stripes"></span><span class="hda-cutin-fx__text">JACKPOT!!</span></div>
   </div>
-
-  <ol class="hda-steps" data-el="steps">
-    <li class="is-active"><span>1</span>写真</li>
-    <li><span>2</span>AI判定</li>
-    <li><span>3</span>重量</li>
-    <li><span>4</span>金額</li>
-  </ol>
-
-  <!-- STEP 1 -->
-  <section class="hda-panel is-active" data-step="1">
-    <h3 class="hda-panel__title"><span class="hda-panel__num">STEP 1</span>電線の写真をアップ</h3>
-    <p class="hda-panel__lead">被覆の色と<b>断面（切り口）</b>が見えるように撮ってください。</p>
-    <label class="hda-drop" data-el="drop">
-      <input type="file" data-el="file" accept="image/*" hidden>
-      <div class="hda-drop__inner" data-el="dropInner">
-        <svg viewBox="0 0 64 64" class="hda-drop__icon" aria-hidden="true">
-          <rect x="6" y="16" width="52" height="38" rx="6" fill="none" stroke="currentColor" stroke-width="3"/>
-          <path d="M22 16l4-7h12l4 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
-          <circle cx="32" cy="35" r="10" fill="none" stroke="currentColor" stroke-width="3"/>
-          <circle cx="48" cy="24" r="2.5" fill="currentColor"/>
-        </svg>
-        <p class="hda-drop__text">ここをタップして<br>撮影 or 写真を選ぶ</p>
-        <p class="hda-drop__sub">JPEG / PNG / HEIC対応</p>
-      </div>
-      <img data-el="preview" class="hda-drop__preview" alt="" hidden>
-      <div class="hda-scan" data-el="scan" hidden>
-        <div class="hda-scan__line"></div>
-        <div class="hda-scan__corner hda-scan__corner--tl"></div>
-        <div class="hda-scan__corner hda-scan__corner--tr"></div>
-        <div class="hda-scan__corner hda-scan__corner--bl"></div>
-        <div class="hda-scan__corner hda-scan__corner--br"></div>
-        <p class="hda-scan__text"><img src="${IMG}nakamura-cheer.png" alt="">ハッピー中村が鑑定中<span class="hda-dots"><i>.</i><i>.</i><i>.</i></span></p>
-      </div>
-    </label>
-    <div class="hda-btnrow">
-      <button type="button" class="hda-btn hda-btn--outline" data-el="camera">📷 カメラで撮る</button>
-      <button type="button" class="hda-btn hda-btn--outline" data-el="pick">🖼 写真を選ぶ</button>
-    </div>
-    <button type="button" class="hda-btn hda-btn--primary hda-btn--big" data-el="classify" disabled>AIで判定する</button>
-    <ul class="hda-tips">
-      <li>明るい場所で、電線に近づいて撮影</li>
-      <li>黒い電線は「断面の銅の太さ」が判定のカギ</li>
-      <li>灰色の平たい線はFケーブル（VA線）</li>
-    </ul>
-  </section>
-
-  <!-- STEP 2 -->
-  <section class="hda-panel" data-step="2">
-    <h3 class="hda-panel__title"><span class="hda-panel__num">STEP 2</span>AI判定結果</h3>
-    <div class="hda-result" data-el="result" style="margin-top:10px">
-      <div class="hda-result__head">
-        <img data-el="thumb" class="hda-result__thumb" alt="">
-        <div class="hda-result__main">
-          <p class="hda-result__label" data-el="resultLabel">判定結果</p>
-          <p class="hda-result__name" data-el="resultName">—</p>
-          <p class="hda-result__tag" data-el="resultTag"></p>
-        </div>
-      </div>
-      <div class="hda-result__conf"><span>AI確信度</span><div class="hda-bar"><i data-el="confBar"></i></div><b data-el="confPct">—</b></div>
-      <p class="hda-result__reason" data-el="resultReason"></p>
-    </div>
-    <p class="hda-panel__lead hda-panel__lead--sm">違う種類なら、タップして選び直してください。</p>
-    <div class="hda-types" data-el="types">
-      <button type="button" class="hda-type" data-type="hachi">
-        <span class="hda-type__swatch hda-type__swatch--hachi"><i></i></span>
-        <span class="hda-type__name">8割銅線</span>
-        <span class="hda-type__desc">黒色・断面の銅率 約80%</span>
-        <span class="hda-type__price"><b data-price="hachi"></b>円/kg</span>
-      </button>
-      <button type="button" class="hda-type" data-type="roku">
-        <span class="hda-type__swatch hda-type__swatch--roku"><i></i></span>
-        <span class="hda-type__name">6割銅線</span>
-        <span class="hda-type__desc">黒色・断面の銅率 約60%</span>
-        <span class="hda-type__price"><b data-price="roku"></b>円/kg</span>
-      </button>
-      <button type="button" class="hda-type" data-type="f">
-        <span class="hda-type__swatch hda-type__swatch--f"><i></i></span>
-        <span class="hda-type__name">Fケーブル（VA線）</span>
-        <span class="hda-type__desc">灰色・平たい形</span>
-        <span class="hda-type__price"><b data-price="f"></b>円/kg</span>
-      </button>
-    </div>
-    <button type="button" class="hda-btn hda-btn--primary hda-btn--big" data-el="toWeight" disabled>この種類で重量を入力</button>
-    <button type="button" class="hda-btn hda-btn--text" data-el="retake">← 写真を撮り直す</button>
-  </section>
-
-  <!-- STEP 3 -->
-  <section class="hda-panel" data-step="3">
-    <h3 class="hda-panel__title"><span class="hda-panel__num">STEP 3</span>重量を入力</h3>
-    <p class="hda-chosen" data-el="chosen"></p>
-    <span class="hda-label">重量<small>おおよそでOK（0.1kg単位）</small></span>
-    <div class="hda-weight">
-      <button type="button" class="hda-weight__btn" data-delta="-1" aria-label="1kg減らす">−</button>
-      <div class="hda-weight__field"><input type="number" data-el="weight" inputmode="decimal" min="0.1" step="0.1" value="10" aria-label="重量（kg）"><span class="hda-weight__unit">kg</span></div>
-      <button type="button" class="hda-weight__btn" data-delta="1" aria-label="1kg増やす">＋</button>
-    </div>
-    <div class="hda-chips" data-el="chips">
-      <button type="button" data-w="5">5kg</button><button type="button" data-w="10">10kg</button><button type="button" data-w="20">20kg</button><button type="button" data-w="50">50kg</button><button type="button" data-w="100">100kg</button>
-    </div>
-    <p class="hda-weight__hint">袋・ドラムごとの重さでも構いません。</p>
-    <button type="button" class="hda-btn hda-btn--primary hda-btn--big hda-btn--pulse" data-el="start">🎰 査定スタート！</button>
-    <button type="button" class="hda-btn hda-btn--text" data-el="backToType">← 種類を選び直す</button>
-  </section>
-
-  <!-- STEP 4 -->
-  <section class="hda-panel hda-panel--slot" data-step="4">
-    <div class="hda-slot" data-el="slot">
-      <div class="hda-slot__top">
-        <img src="${IMG}happy-logo.png" class="hda-slot__toplogo" alt="">
-        <span class="hda-slot__title">買取概算金額</span>
-        <button type="button" class="hda-sound" data-el="sound" aria-pressed="false" title="効果音">🔇</button>
-      </div>
-      <div class="hda-slot__reelpanel">
-        <div class="hda-lamps" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-        <div class="hda-slot__window">
-          <span class="hda-slot__payline" aria-hidden="true"></span>
-          <span class="hda-slot__yen">¥</span><div class="hda-reels" data-el="reels"></div>
-        </div>
-        <div class="hda-lamps hda-lamps--bottom" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-      </div>
-      <div class="hda-slot__deck">
-        <div class="hda-gogo" data-el="gogo" aria-label="ハッピーランプ">
-          <span class="hda-gogo__flash"></span>
-          <img src="${IMG}happy-logo.png" class="hda-gogo__logo" alt="ハッピー">
-          <span class="hda-gogo__chance">CHANCE</span>
-        </div>
-        <div class="hda-led">
-          <div class="hda-led__item"><span>WEIGHT</span><b data-el="ledKg">--</b><i>kg</i></div>
-          <div class="hda-led__item"><span>PRICE</span><b data-el="ledPrice">----</b><i>円/kg</i></div>
-        </div>
-      </div>
-      <p class="hda-slot__formula" data-el="formula"></p>
-      <div class="hda-slot__controls">
-        <div class="hda-slot__buttons" aria-hidden="true">
-          <span class="hda-bet">MAX<br>BET</span>
-          <i class="hda-stop hda-stop--r" data-el="stop1"></i>
-          <i class="hda-stop hda-stop--y" data-el="stop2"></i>
-          <i class="hda-stop hda-stop--g" data-el="stop3"></i>
-        </div>
-        <button type="button" class="hda-btn hda-btn--primary hda-btn--big hda-respin" data-el="respin">
-          <span class="hda-respin__knob" aria-hidden="true"></span>
-          <span>もう一度試す<small>レバーON！ランプを再抽選</small></span>
-        </button>
-      </div>
-      <div class="hda-slot__msg" data-el="msg" hidden>
-        <img src="${IMG}nakamura-cheer.png" alt="">
-        <p data-el="msgText"></p>
-      </div>
-    </div>
-    <p class="hda-disclaimer">※概算です。実際の買取金額は店頭での計量・状態確認と当日の相場で決まります。ハッピーランプは演出で、金額には影響しません。</p>
-    <button type="button" class="hda-btn hda-btn--outline hda-btn--big hda-again" data-el="again">別の電線を査定する</button>
-  </section>
   `;
 
   /* ---------------- 本体 ---------------- */
@@ -213,9 +268,8 @@
 
     const CFG = window.HAPPY_CONFIG || {};
     const PRICES = Object.assign({ hachi: 1660, roku: 1400, f: 860 }, CFG.prices || {});
-    let priceUpdated = CFG.pricesUpdated || "";
 
-    // スタッフ用: URLで単価を一時上書き ?p8=1700&p6=1450&pf=900 、HAPPYランプ強制 ?happy=1 / 0
+    // スタッフ用: URLで単価を一時上書き ?p8=1700&p6=1450&pf=900 、大当たり強制 ?happy=1 / 0
     const qs = new URLSearchParams(location.search);
     const ov = { hachi: qs.get("p8"), roku: qs.get("p6"), f: qs.get("pf") };
     Object.keys(ov).forEach((k) => { if (ov[k] && !isNaN(+ov[k])) PRICES[k] = +ov[k]; });
@@ -227,7 +281,7 @@
       f: { key: "f", name: "Fケーブル（VA線）", tag: "灰色電線・平たい形" }
     };
 
-    const state = { dataUrl: null, base64: null, canvas: null, aiType: null, type: null, confidence: 0, weight: 10, amount: 0, spinning: false };
+    const state = { dataUrl: null, base64: null, canvas: null, aiType: null, type: null, confidence: 0, weight: 10, amount: 0, spinning: false, mode: "photo", screen: "upload" };
 
     const el = (name) => root.querySelector(`[data-el="${name}"]`);
     const $$ = (s) => Array.from(root.querySelectorAll(s));
@@ -235,10 +289,33 @@
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const vibrate = (pat) => { try { if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) navigator.vibrate(pat); } catch (_) {} };
 
+    /* 固定幅キャンバスを枠の幅に合わせて縮小 */
+    const canvas = el("canvas");
+    function fitCanvas() {
+      const w = root.clientWidth || CANVAS_W;
+      const scale = Math.min(1, w / CANVAS_W);
+      const screen = root.querySelector(`.hda-screen[data-screen="${state.screen}"]`);
+      const h = screen ? screen.offsetHeight : 1400;
+      canvas.style.transform = `scale(${scale})`;
+      root.style.height = `${Math.round(h * scale)}px`;
+    }
+    if (window.ResizeObserver) new ResizeObserver(fitCanvas).observe(root); else window.addEventListener("resize", fitCanvas);
+
+    function goScreen(name) {
+      state.screen = name;
+      $$(".hda-screen").forEach((s) => { s.hidden = s.dataset.screen !== name; });
+      if (name !== "jackpot") { const jp = root.querySelector('.hda-screen[data-screen="jackpot"]'); jp.classList.remove("is-cutin", "is-enter", "is-win"); }
+      fitCanvas();
+      const off = typeof CFG.scrollOffset === "number" ? CFG.scrollOffset : 80;
+      const top = root.getBoundingClientRect().top + window.scrollY - off;
+      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    }
+
     /* 価格 */
     function renderPrices() {
       $$("[data-price]").forEach((e) => { e.textContent = yen(PRICES[e.dataset.price]); });
-      if (state.type) el("chosen").innerHTML = `<b>${TYPES[state.type].name}</b> × <span>${yen(PRICES[state.type])}</span>円/kg`;
+      el("exPrice").textContent = `${yen(PRICES.hachi)}円/kg`;
+      el("exAmount").textContent = `¥${yen(PRICES.hachi * 20)}`;
     }
     async function fetchRemotePrices() {
       if (!CFG.pricesEndpoint) return;
@@ -248,19 +325,9 @@
         const j = await res.json();
         if (j && j.prices) {
           ["hachi", "roku", "f"].forEach((k) => { if (typeof j.prices[k] === "number" && j.prices[k] > 0) PRICES[k] = j.prices[k]; });
-          if (j.updated) priceUpdated = j.updated;
           renderPrices();
         }
       } catch (e) { console.warn("[happy-assess] 価格の自動取得に失敗。config.js の単価を使用します。", e); }
-    }
-
-    /* ステップ */
-    function goStep(n) {
-      $$(".hda-panel").forEach((p) => p.classList.toggle("is-active", +p.dataset.step === n));
-      $$("[data-el=steps] li").forEach((li, i) => { li.classList.toggle("is-active", i + 1 === n); li.classList.toggle("is-done", i + 1 < n); });
-      const off = typeof CFG.scrollOffset === "number" ? CFG.scrollOffset : 80; // 固定ヘッダー分
-      const top = el("steps").getBoundingClientRect().top + window.scrollY - off;
-      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
     }
 
     /* トースト */
@@ -304,6 +371,7 @@
       el("drop").classList.add("has-image");
       el("classify").disabled = false;
       el("thumb").src = state.dataUrl;
+      fitCanvas();
     }
 
     /* 判定 */
@@ -433,22 +501,21 @@
       await sleep(Math.max(0, 1800 - (Date.now() - started)));
       el("scan").hidden = true;
       el("classify").disabled = false;
+      state.mode = "photo";
       showResult(result);
-      goStep(2);
+      goScreen("analyze");
     }
     function showResult(r) {
       state.aiType = TYPES[r.type] ? r.type : null;
       state.confidence = r.confidence;
+      el("result").hidden = false;
       el("result").classList.toggle("is-unknown", !state.aiType);
-      if (state.aiType) {
-        el("resultLabel").textContent = r.source === "ai" ? "AI判定結果" : "簡易判定結果";
-        el("resultName").textContent = TYPES[state.aiType].name;
-        el("resultTag").textContent = TYPES[state.aiType].tag;
-      } else {
-        el("resultLabel").textContent = "判定結果";
-        el("resultName").textContent = "判別できませんでした";
-        el("resultTag").textContent = "下から種類を選んでください";
-      }
+      el("resultHeadText").textContent = r.source === "ai" ? "AI解析完了" : "AI解析完了（簡易判定）";
+      el("analyzeTitle").firstChild.textContent = state.aiType ? "AI解析が完了しました！" : "種類を選んでください";
+      el("analyzeSub").textContent = state.aiType ? "種類を確認して、重量を入力してください。" : "写真からは判別できませんでした。近い種類をタップしてください。";
+      el("analyzeBubble").innerHTML = state.aiType ? "<em>AI</em>解析が<br>完了したぞ！" : "もう少し<br>近づいて撮ってくれ！";
+      el("resultName").textContent = state.aiType ? TYPES[state.aiType].name : "判別できませんでした";
+      el("resultTag").textContent = state.aiType ? TYPES[state.aiType].tag : "下から種類を選んでください";
       const pct = Math.round(Math.max(0, Math.min(1, r.confidence)) * 100);
       el("confPct").textContent = pct + "%";
       el("confBar").style.width = "0%";
@@ -456,15 +523,16 @@
       el("resultReason").textContent = r.reason || "";
       if (r.fallback) toast("AIサーバーに接続できないため、簡易判定で表示しています");
       $$("[data-el=types] .hda-type").forEach((b) => b.classList.toggle("is-ai", b.dataset.type === state.aiType));
+      el("typesLead").textContent = "違う種類なら、タップして選び直してください。";
+      el("retake").textContent = "← 写真を撮り直す";
       setType(state.aiType);
     }
     function setType(key) {
       state.type = TYPES[key] ? key : null;
       $$("[data-el=types] .hda-type").forEach((b) => b.classList.toggle("is-selected", b.dataset.type === state.type));
-      el("toWeight").disabled = !state.type;
-      if (state.type) el("chosen").innerHTML = `<b>${TYPES[state.type].name}</b> × <span>${yen(PRICES[state.type])}</span>円/kg`;
+      el("start").disabled = !state.type;
+      fitCanvas();
     }
-
     /* 重量 */
     function setWeight(w) {
       w = Math.round(Math.max(.1, Math.min(99999, w)) * 10) / 10;
@@ -474,41 +542,110 @@
       $$("[data-el=chips] button").forEach((b) => b.classList.toggle("is-on", +b.dataset.w === w));
     }
 
-    /* 効果音 */
+    /* 効果音（WebAudio 合成・独自音）
+     * 方向性: サイボーグ／ダーク SF 映画のような緊張感。
+     *  - 低いドローン（回転中）、金属を打つ打撃音（リール停止）、サーボの駆動音（回転中のカチカチ）、
+     *    上昇するライザー＋衝撃音（カットイン）、暗い短調のシンセ和音と金属連打（大当たり）
+     *  既存作品のメロディ・リズムは使わない。 */
     const Sound = {
-      ctx: null, on: false,
-      init() { if (!this.ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) this.ctx = new AC(); } if (this.ctx && this.ctx.state === "suspended") this.ctx.resume(); },
-      beep(freq, dur, type = "square", gain = .06, when = 0) {
+      ctx: null, on: false, _drone: null, _noise: null,
+      init() {
+        if (!this.ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) this.ctx = new AC(); }
+        if (this.ctx && this.ctx.state === "suspended") this.ctx.resume();
+        if (this.ctx && !this._noise) { // ホワイトノイズ素材（2秒）
+          const len = this.ctx.sampleRate * 2, buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate), d = buf.getChannelData(0);
+          for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+          this._noise = buf;
+        }
+      },
+      _out(gain, t, dur, curve) { // 減衰付きゲイン
+        const g = this.ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(gain, t + 0.005);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        g.connect(this.ctx.destination);
+        return g;
+      },
+      tone(freq, dur, type = "sine", gain = .06, when = 0, detune = 0, slideTo = null) {
         if (!this.on || !this.ctx) return;
-        const t = this.ctx.currentTime + when, o = this.ctx.createOscillator(), g = this.ctx.createGain();
-        o.type = type; o.frequency.setValueAtTime(freq, t);
-        g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
-        o.connect(g).connect(this.ctx.destination); o.start(t); o.stop(t + dur + .02);
+        const t = this.ctx.currentTime + when, o = this.ctx.createOscillator();
+        o.type = type; o.frequency.setValueAtTime(freq, t); o.detune.value = detune;
+        if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+        o.connect(this._out(gain, t, dur)); o.start(t); o.stop(t + dur + .05);
       },
-      tick() { this.beep(1200, .05, "square", .05); },
-      stop() { this.beep(520, .12, "triangle", .09); this.beep(780, .1, "triangle", .06, .03); },
-      peka() { // 「ペカッ」告知音（ジャグラー風の雰囲気を狙った独自音）: 高速上昇アルペジオ → 高音のロング + トレモロ
-        [1568, 1976, 2349, 2794, 3136].forEach((f, i) => this.beep(f, .12, "square", .05, i * .045));
-        this.beep(3136, .7, "sine", .09, .24); this.beep(4186, .55, "sine", .04, .27);
-        for (let i = 0; i < 9; i++) this.beep(3136 * (i % 2 ? 1 : 1.006), .07, "triangle", .035, .42 + i * .07);
+      noise(dur, gain = .08, when = 0, filterFreq = 1200, q = 1, type = "bandpass") {
+        if (!this.on || !this.ctx || !this._noise) return;
+        const t = this.ctx.currentTime + when, src = this.ctx.createBufferSource(); src.buffer = this._noise;
+        const f = this.ctx.createBiquadFilter(); f.type = type; f.frequency.setValueAtTime(filterFreq, t); f.Q.value = q;
+        src.connect(f).connect(this._out(gain, t, dur)); src.start(t); src.stop(t + dur + .05);
       },
-      done() { this.beep(880, .15, "triangle", .07); this.beep(1175, .25, "triangle", .07, .12); },
-      win() { // 大当たりファンファーレ（独自メロディ・約2.6秒）: スクエア波リード + トライアングル波ベース + キラキラ
-        const q = 60 / 172;
-        const lead = [[659, .5], [784, .5], [1047, .5], [1319, .5], [1175, .5], [1047, .5], [784, 1], [880, .5], [988, .5], [1047, .5], [1319, .5], [1568, 1.5]];
-        let t = 0;
-        lead.forEach(([f, d]) => { this.beep(f, q * d * .9, "square", .05, t); this.beep(f * 2, q * d * .9, "triangle", .02, t); t += q * d; });
-        [262, 262, 349, 349, 392, 392, 262, 262, 349, 392, 523, 523].forEach((f, i) => this.beep(f, q * .45, "triangle", .06, i * q));
-        for (let i = 0; i < 12; i++) this.beep(2000 + i * 230, .06, "sine", .03, t - .2 + i * .04);
+      // 金属を打つ音: 非整数倍の部分音 + 高域ノイズ
+      metal(base = 620, when = 0, gain = .12, dur = .9) {
+        [1, 1.51, 2.09, 2.77, 3.63].forEach((r, i) => this.tone(base * r, dur * (1 - i * .14), "sine", gain / (i + 1.4), when));
+        this.noise(.12, gain * .9, when, 4200, .8, "highpass");
+      },
+      // 低い衝撃音（サブベース + 胴鳴り）
+      impact(when = 0, gain = .35) {
+        this.tone(140, .5, "sine", gain, when, 0, 38);
+        this.tone(55, 1.2, "triangle", gain * .8, when + .02);
+        this.noise(.35, gain * .5, when, 220, .7, "lowpass");
+      },
+      // サーボの駆動音（回転中のカチカチ）
+      tick() { this.noise(.035, .05, 0, 2600, 2); this.tone(180, .04, "square", .02); },
+      // リール停止: 金属の打撃
+      stop() { this.metal(520 + Math.random() * 60, 0, .11, .7); this.tone(70, .25, "sine", .12); },
+      // 回転中のドローン（開始/停止）
+      droneStart() {
+        if (!this.on || !this.ctx || this._drone) return;
+        const t = this.ctx.currentTime;
+        const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(.07, t + .6); g.connect(this.ctx.destination);
+        const f = this.ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 420; f.Q.value = 6; f.connect(g);
+        const lfo = this.ctx.createOscillator(); lfo.frequency.value = 2.2; const lg = this.ctx.createGain(); lg.gain.value = 260; lfo.connect(lg).connect(f.frequency); lfo.start(t);
+        const oscs = [[41.2, "sawtooth", 0], [41.2, "sawtooth", 9], [61.7, "square", -5]].map(([fr, ty, dt]) => { const o = this.ctx.createOscillator(); o.type = ty; o.frequency.value = fr; o.detune.value = dt; o.connect(f); o.start(t); return o; });
+        this._drone = { g, oscs, lfo };
+      },
+      droneStop() {
+        if (!this._drone || !this.ctx) return;
+        const t = this.ctx.currentTime, d = this._drone; this._drone = null;
+        d.g.gain.cancelScheduledValues(t); d.g.gain.setValueAtTime(d.g.gain.value || .07, t); d.g.gain.exponentialRampToValueAtTime(.0001, t + .5);
+        d.oscs.forEach((o) => o.stop(t + .6)); d.lfo.stop(t + .6);
+      },
+      // カットイン: ライザー（上昇）→ 衝撃 → 金属の一撃
+      peka() {
+        this.tone(60, .9, "sawtooth", .09, 0, 0, 480);
+        this.tone(60, .9, "sawtooth", .09, 0, 7, 484);
+        this.noise(.9, .06, 0, 800, .6, "highpass");
+        this.impact(.92, .4);
+        this.metal(300, .94, .18, 1.6);
+        for (let i = 0; i < 6; i++) this.tone(1200 + i * 90, .08, "square", .02, .1 + i * .12); // 警告ブザー的な連打
+      },
+      // 通常の査定完了: 低い和音 + 短い金属音
+      done() {
+        this.tone(110, .9, "sawtooth", .05); this.tone(164.8, .9, "sawtooth", .04, .0, 5);
+        this.metal(880, .05, .06, .5);
+        this.tone(220, .3, "sine", .05, .1, 0, 165);
+      },
+      // 大当たり: 暗い短調の重厚な和音を刻む + 金属連打 + 最後に衝撃（約2.6秒・独自パターン）
+      win() {
+        const q = .3; // 拍
+        const stab = (root, when, len = .26, g = .07) => { [1, 1.5, 2, 2.38].forEach((r, i) => this.tone(root * r, len, i < 2 ? "sawtooth" : "square", g / (i + 1), when, (i % 2 ? 6 : -6))); this.noise(.06, .05, when, 600, 1, "lowpass"); };
+        // 拍パターン（x=打, .=休）: x . x x . x . . | x . x x . x . .  → Am(110) → F(87.3) → G(98) → Am
+        const pattern = [1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0];
+        const roots = [110, 110, 110, 110, 110, 87.3, 87.3, 87.3, 98, 98, 98, 98, 110, 110, 110, 110];
+        pattern.forEach((hit, i) => { if (hit) { stab(roots[i], i * q * .5); this.metal(420 + (i % 3) * 110, i * q * .5, .08, .5); } });
+        this.tone(55, 2.6, "triangle", .07); // 支えの低音
+        this.impact(2.45, .45);
+        this.metal(240, 2.47, .2, 2.0);
+        for (let i = 0; i < 10; i++) this.tone(1600 + i * 180, .05, "sine", .02, 2.5 + i * .04); // 余韻のきらめき（控えめ）
       }
     };
 
-    /* スロット */
-    function buildReels(amount) {
+    /* ---------------- 結果表示（リール） ---------------- */
+    // 通常版: ピンクの数字リール
+    function buildReels(container, amount, compactAt) {
       const str = String(Math.max(0, Math.round(amount)));
-      const reels = el("reels");
-      reels.innerHTML = "";
-      reels.classList.toggle("is-compact", str.length >= 6);
+      container.innerHTML = "";
+      container.classList.toggle("is-compact", str.length >= compactAt);
       const digits = str.split("");
       digits.forEach((d, i) => {
         const remaining = digits.length - i;
@@ -520,85 +657,116 @@
         for (let n = 0; n <= +d; n++) html += `<span>${n}</span>`;
         strip.innerHTML = html;
         strip.dataset.target = loops * 10 + +d;
-        reel.appendChild(strip); reels.appendChild(reel);
-        if (remaining > 1 && (remaining - 1) % 3 === 0) { const sep = document.createElement("span"); sep.className = "hda-reel-sep"; sep.textContent = ","; reels.appendChild(sep); }
+        reel.appendChild(strip); container.appendChild(reel);
+        if (remaining > 1 && (remaining - 1) % 3 === 0) { const sep = document.createElement("span"); sep.className = "hda-reel-sep"; sep.textContent = ","; container.appendChild(sep); }
       });
     }
-
-    // HAPPYランプ点灯（ペカッ）: 一瞬ちらついてから点きっぱなし
-    async function igniteGogo() {
-      const g = el("gogo");
-      Sound.peka();
-      g.classList.add("is-flash");
-      g.classList.add("is-on"); await sleep(70);
-      g.classList.remove("is-on"); await sleep(60);
-      g.classList.add("is-on"); await sleep(50);
-      g.classList.remove("is-on"); await sleep(40);
-      g.classList.add("is-on");
-      vibrate([30, 30, 120]);
-      setTimeout(() => g.classList.remove("is-flash"), 600);
+    // 最強版: 金色の数字画像リール
+    function buildGoldReels(container, amount) {
+      const str = String(Math.max(0, Math.round(amount)));
+      container.innerHTML = "";
+      container.classList.toggle("is-compact", str.length >= 6);
+      const yenImg = document.createElement("img"); yenImg.className = "hda-gold__yen"; yenImg.src = asset("digits/yen.png"); yenImg.alt = "¥";
+      container.appendChild(yenImg);
+      const digits = str.split("");
+      digits.forEach((d, i) => {
+        const remaining = digits.length - i;
+        const reel = document.createElement("div"); reel.className = "hda-reel";
+        const strip = document.createElement("div"); strip.className = "hda-reel__strip";
+        const loops = 2 + i;
+        let html = "";
+        for (let l = 0; l < loops; l++) for (let n = 0; n < 10; n++) html += `<img src="${asset(`digits/${n}.png`)}" alt="">`;
+        for (let n = 0; n <= +d; n++) html += `<img src="${asset(`digits/${n}.png`)}" alt="${n === +d ? d : ""}">`;
+        strip.innerHTML = html;
+        strip.dataset.target = loops * 10 + +d;
+        reel.appendChild(strip); container.appendChild(reel);
+        if (remaining > 1 && (remaining - 1) % 3 === 0) { const sep = document.createElement("img"); sep.className = "hda-reel-sep"; sep.src = asset("digits/comma.png"); sep.alt = ","; container.appendChild(sep); }
+      });
     }
-
-    async function spin() {
-      if (state.spinning || !state.type) return;
-      state.spinning = true;
-      Sound.init();
-      const slot = el("slot"), gogo = el("gogo"), msg = el("msg");
-      el("respin").disabled = true;
-      msg.hidden = true;
-      gogo.classList.remove("is-on", "is-flash");
-      slot.classList.remove("is-win", "is-shake");
-      slot.classList.add("is-spinning");
-
-      // 抽選: 毎回ランダム。当たりならリールが回り始めた瞬間に点灯
-      const chance = typeof CFG.happyChance === "number" ? CFG.happyChance : typeof CFG.gogoChance === "number" ? CFG.gogoChance : .33;
-      const peka = forcedGogo === "1" ? true : forcedGogo === "0" ? false : Math.random() < chance;
-
-      state.amount = Math.floor(PRICES[state.type] * state.weight);
-      el("formula").innerHTML = `${TYPES[state.type].name} <b>${state.weight}</b>kg × <b>${yen(PRICES[state.type])}</b>円（税込・概算）`;
-      el("ledKg").textContent = state.weight;
-      el("ledPrice").textContent = yen(PRICES[state.type]);
-      ["stop1", "stop2", "stop3"].forEach((k) => el(k).classList.remove("is-lit"));
-      el("respin").classList.add("is-pull");
-      setTimeout(() => el("respin").classList.remove("is-pull"), 260);
-      buildReels(state.amount);
-
-      const strips = $$("[data-el=reels] .hda-reel__strip");
-      const DIGIT_H = strips.length ? strips[0].firstElementChild.getBoundingClientRect().height || 56 : 56; // レスポンシブで高さが変わるため実測
+    async function spinStrips(container) {
+      const strips = Array.from(container.querySelectorAll(".hda-reel__strip"));
+      const H = strips.length ? strips[0].firstElementChild.offsetHeight || 96 : 96;
       strips.forEach((s) => { s.style.transition = "none"; s.style.transform = "translateY(0)"; s.classList.add("is-blur"); });
-      void slot.offsetWidth;
-
-      if (peka) igniteGogo(); // 回転開始と同時にペカッ
-
+      void container.offsetWidth;
       const base = 1300, stagger = 380;
+      Sound.droneStart();
       const ticker = setInterval(() => Sound.tick(), 90);
-      const stopMap = { 0: "stop1", [Math.floor((strips.length - 1) / 2)]: "stop2", [strips.length - 1]: "stop3" };
       strips.forEach((s, i) => {
         const dur = base + i * stagger;
         s.style.transition = `transform ${dur}ms cubic-bezier(.12,.75,.25,1.04)`;
-        s.style.transform = `translateY(-${(+s.dataset.target) * DIGIT_H}px)`;
-        setTimeout(() => { s.classList.remove("is-blur"); Sound.stop(); if (stopMap[i]) el(stopMap[i]).classList.add("is-lit"); }, dur);
+        s.style.transform = `translateY(-${(+s.dataset.target) * H}px)`;
+        setTimeout(() => { s.classList.remove("is-blur"); Sound.stop(); }, dur);
       });
       await sleep(base + (strips.length - 1) * stagger + 80);
       clearInterval(ticker);
-      slot.classList.remove("is-spinning");
+      Sound.droneStop();
+    }
+    function currentScale() {
+      const m = /scale\(([\d.]+)\)/.exec(canvas.style.transform || "");
+      return m ? parseFloat(m[1]) || 1 : 1;
+    }
 
-      if (peka) {
-        slot.classList.add("is-win", "is-shake");
-        el("msgText").innerHTML = "<b>ペカッ！大当たり〜！</b><br>ハッピー中村もビックリの買取目安です";
-        msg.classList.add("is-peka");
-        Sound.win();
-        confetti(slot, 170);
-        vibrate([60, 40, 60, 40, 160]);
+    function decideHappy() {
+      const chance = typeof CFG.happyChance === "number" ? CFG.happyChance : .33;
+      return forcedGogo === "1" ? true : forcedGogo === "0" ? false : Math.random() < chance;
+    }
+
+    async function showOutcome() {
+      if (state.spinning || !state.type) return;
+      state.spinning = true;
+      Sound.init();
+      state.amount = Math.floor(PRICES[state.type] * state.weight);
+      const happy = decideHappy();
+      const methodText = "写真によるAI査定（断面から判定）";
+
+      // まず通常の査定結果
+      hideCutin();
+      el("thumb2").src = state.dataUrl || asset("ex-hachi.jpg");
+      el("cardCaption").textContent = "アップロードした写真";
+      el("cardName").textContent = TYPES[state.type].name;
+      el("cardSub").textContent = state.aiType === state.type ? "画像から推定" : "手動で選択";
+      el("dType").textContent = `${TYPES[state.type].name}（${TYPES[state.type].tag}）`;
+      el("dMethod").textContent = methodText;
+      el("dCalc").textContent = `約 ${state.weight} kg × ${yen(PRICES[state.type])} 円/kg（税込）`;
+      buildReels(el("reels"), state.amount, 6);
+      goScreen("result");
+      await sleep(350);
+      await spinStrips(el("reels"));
+      Sound.done();
+
+      if (happy) {
+        // たまに出るカットイン: 閃光 → 斜めワイプで最強バージョンが割り込む → 金色の数字が回る
+        await sleep(500);
+        await cutIn();
       } else {
-        el("msgText").innerHTML = "<b>査定完了！</b><br>この金額がお買取りの目安です";
-        msg.classList.remove("is-peka");
-        Sound.done();
-        confetti(slot, 40);
+        confetti(el("card"), 40);
       }
-      msg.hidden = false;
-      el("respin").disabled = false;
       state.spinning = false;
+    }
+
+    const jackpot = root.querySelector('.hda-screen[data-screen="jackpot"]');
+    async function cutIn() {
+      const fx = el("cutinFx");
+      jackpot.classList.remove("is-win", "is-enter");
+      buildGoldReels(el("gold"), state.amount);
+      Sound.peka();
+      fx.hidden = false; fx.classList.remove("is-run"); void fx.offsetWidth; fx.classList.add("is-run");
+      await sleep(180);
+      jackpot.hidden = false;
+      jackpot.classList.add("is-cutin", "is-enter");
+      vibrate([40, 40, 40, 40, 200]);
+      window.scrollTo({ top: Math.max(0, root.getBoundingClientRect().top + window.scrollY - (typeof CFG.scrollOffset === "number" ? CFG.scrollOffset : 80)), behavior: "smooth" });
+      await sleep(700);
+      fx.hidden = true;
+      await spinStrips(el("gold"));
+      jackpot.classList.add("is-win");
+      Sound.win();
+      confetti(el("gold"), 170);
+    }
+    function hideCutin() {
+      jackpot.hidden = true;
+      jackpot.classList.remove("is-cutin", "is-enter", "is-win");
+      const fx = el("cutinFx"); fx.hidden = true; fx.classList.remove("is-run");
     }
 
     /* 紙吹雪 */
@@ -638,31 +806,26 @@
 
     /* リセット */
     function resetAll() {
-      state.dataUrl = state.base64 = null; state.aiType = state.type = null;
+      state.dataUrl = state.base64 = null; state.aiType = state.type = null; state.canvas = null; state.mode = "photo";
       el("preview").hidden = true; el("preview").src = "";
       el("dropInner").hidden = false;
       el("drop").classList.remove("has-image");
       el("classify").disabled = true;
       el("file").value = "";
-      el("gogo").classList.remove("is-on", "is-flash");
-      el("slot").classList.remove("is-win", "is-spinning");
-      el("msg").hidden = true;
-      goStep(1);
+      goScreen("upload");
     }
 
     /* イベント */
     const fileInput = el("file"), drop = el("drop");
     fileInput.addEventListener("change", () => handleFile(fileInput.files[0]));
-    el("camera").addEventListener("click", (e) => { e.preventDefault(); fileInput.setAttribute("capture", "environment"); fileInput.click(); });
-    el("pick").addEventListener("click", (e) => { e.preventDefault(); fileInput.removeAttribute("capture"); fileInput.click(); });
     drop.addEventListener("click", (e) => { if (e.target !== fileInput) { e.preventDefault(); fileInput.removeAttribute("capture"); fileInput.click(); } });
     ["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("is-over"); }));
     ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("is-over"); }));
     drop.addEventListener("drop", (e) => { const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f) handleFile(f); });
 
+
     el("classify").addEventListener("click", runClassify);
     $$("[data-el=types] .hda-type").forEach((b) => b.addEventListener("click", () => setType(b.dataset.type)));
-    el("toWeight").addEventListener("click", () => { setWeight(state.weight); goStep(3); });
     el("retake").addEventListener("click", resetAll);
 
     $$(".hda-weight__btn").forEach((b) => b.addEventListener("click", () => setWeight(state.weight + +b.dataset.delta)));
@@ -670,24 +833,13 @@
     el("weight").addEventListener("blur", () => setWeight(state.weight));
     el("weight").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); el("start").click(); } });
     $$("[data-el=chips] button").forEach((b) => b.addEventListener("click", () => setWeight(+b.dataset.w)));
-    el("backToType").addEventListener("click", () => goStep(2));
 
     el("start").addEventListener("click", () => {
-      if (!state.type) { toast("種類を選んでください"); goStep(2); return; }
+      if (!state.type) { toast("種類を選んでください"); return; }
       if (!(state.weight > 0)) { toast("重量を入力してください"); return; }
-      Sound.init();
-      goStep(4);
-      setTimeout(spin, 350);
+      showOutcome();
     });
-    el("respin").addEventListener("click", spin);
-    // 画面幅が変わってリールの高さが変わったら、停止位置を取り直す
-    window.addEventListener("resize", () => {
-      if (state.spinning) return;
-      $$("[data-el=reels] .hda-reel__strip").forEach((s) => {
-        const hgt = s.firstElementChild ? s.firstElementChild.getBoundingClientRect().height : 0;
-        if (hgt && s.dataset.target) { s.style.transition = "none"; s.style.transform = `translateY(-${(+s.dataset.target) * hgt}px)`; }
-      });
-    });
+    el("retry").addEventListener("click", () => { hideCutin(); state.screen = "result"; fitCanvas(); window.scrollTo({ top: Math.max(0, root.getBoundingClientRect().top + window.scrollY - (typeof CFG.scrollOffset === "number" ? CFG.scrollOffset : 80)), behavior: "smooth" }); });
     el("again").addEventListener("click", resetAll);
 
     const sb = el("sound");
@@ -697,12 +849,19 @@
     sb.addEventListener("click", () => {
       Sound.on = !Sound.on; Sound.init(); renderSound();
       try { localStorage.setItem("hd_sound", Sound.on ? "1" : "0"); } catch (_) {}
-      if (Sound.on) Sound.stop();
+      if (Sound.on) Sound.done();
     });
+
+    // LINEボタン（config.lineUrl が無ければ非表示）
+    ["lineLink1", "lineLink2", "lineLink3"].forEach((k) => { if (CFG.lineUrl) el(k).href = CFG.lineUrl; else el(k).hidden = true; });
 
     renderPrices();
     fetchRemotePrices();
     setWeight(10);
+    fitCanvas();
+    // 画像の読み込み完了後に高さを取り直す
+    $$("img").forEach((im) => { if (!im.complete) im.addEventListener("load", fitCanvas, { once: true }); });
+    setTimeout(fitCanvas, 600);
   }
 
   /* ---------------- 起動 ---------------- */
