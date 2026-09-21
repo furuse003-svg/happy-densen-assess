@@ -2,7 +2,7 @@
  * ハッピーデンセン AI自動査定 — Cloudflare Worker
  *
  *  POST /api/classify  { image: <base64>, media_type: "image/jpeg" }
- *        → { category: "hachi"|"roku"|"f"|"unknown", confidence: 0..1, reason: string, is_cable: boolean }
+ *        → { category: "hachi"|"roku"|"f"|"unknown", confidence: 0..1, reason: string, is_cable: boolean, subject: "cable"|"bald_head"|"other" }
  *        Claude (vision) で 8割銅線 / 6割銅線 / Fケーブル を判別する
  *
  *  GET  /api/prices
@@ -19,12 +19,14 @@ export interface Env {
 }
 
 type Category = "hachi" | "roku" | "f" | "unknown";
+type Subject = "cable" | "bald_head" | "other";
 
 interface ClassifyResult {
   category: Category;
   confidence: number;
   reason: string;
   is_cable: boolean;
+  subject: Subject; // 電線以外のときの被写体（bald_head = 人のハゲ頭・スキンヘッド → 「それは中村だ！」演出）
 }
 
 const ALLOWED_MEDIA = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
@@ -37,8 +39,9 @@ const OUTPUT_SCHEMA = {
     confidence: { type: "number", minimum: 0, maximum: 1 },
     reason: { type: "string" },
     is_cable: { type: "boolean" },
+    subject: { type: "string", enum: ["cable", "bald_head", "other"] },
   },
-  required: ["category", "confidence", "reason", "is_cable"],
+  required: ["category", "confidence", "reason", "is_cable", "subject"],
   additionalProperties: false,
 } as const;
 
@@ -56,6 +59,12 @@ const SYSTEM_PROMPT = `あなたは札幌の電線・銅スクラップ買取店
 2. 黒色なら断面（切り口）を探し、銅の面積比で hachi か roku を決める。断面が写っていない場合は導体の太さや被覆の厚みから推定し、confidence を下げる。
 3. 複数種類が混ざっている場合は、写真の中で量が最も多いものを選ぶ。
 4. 電線が写っていない・判別不能なら unknown。
+
+■ subject（被写体）
+- cable = 電線が写っている（判別できなくても電線ならこれ）。
+- bald_head = 電線ではなく、人の頭（ハゲ頭・スキンヘッド・剃った頭・薄毛の頭頂部）が主な被写体。顔全体が写っていても頭髪が無い／少ない人ならこれ。
+- other = 電線でも頭でもない（風景・食べ物・他の物など）。
+category が unknown で電線でない場合は必ず bald_head か other を選ぶ。
 
 ■ 出力
 - confidence は 0〜1。断面が明瞭なら高く、断面が写っていない・暗い・遠いなら低くする。
@@ -117,7 +126,7 @@ async function classify(env: Env, image: string, mediaType: string): Promise<Cla
   });
 
   if (response.stop_reason === "refusal") {
-    return { category: "unknown", confidence: 0, reason: "この画像は判定できませんでした。別の写真でお試しください。", is_cable: false };
+    return { category: "unknown", confidence: 0, reason: "この画像は判定できませんでした。別の写真でお試しください。", is_cable: false, subject: "other" };
   }
 
   const text = response.content.find((b) => b.type === "text");
@@ -130,6 +139,7 @@ async function classify(env: Env, image: string, mediaType: string): Promise<Cla
     confidence: Math.max(0, Math.min(1, Number(parsed.confidence) || 0)),
     reason: String(parsed.reason || "").slice(0, 120),
     is_cable: Boolean(parsed.is_cable),
+    subject: (["cable", "bald_head", "other"] as Subject[]).includes(parsed.subject) ? parsed.subject : parsed.is_cable ? "cable" : "other",
   };
 }
 

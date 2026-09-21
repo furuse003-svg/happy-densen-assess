@@ -153,8 +153,9 @@
     <section class="hda-screen hda-screen--analyze" data-screen="analyze" hidden>
       <div class="hda-screen__bg"><img src="${asset("bg-warehouse.jpg")}" alt=""></div>
       ${sideDeco}
-      <img class="hda-abs hda-chara hda-chara--main" src="${asset("nakamura-full1.png")}" alt="">
-      <div class="hda-abs hda-bubble hda-bubble--ai"><img src="${asset("robot-icon.jpg")}" alt=""><span data-el="analyzeBubble"><em>AI</em>解析が<br>完了したぞ！</span></div>
+      <img class="hda-abs hda-chara hda-chara--main" data-el="analyzeChara" src="${asset("nakamura-full1.png")}" alt="">
+      <img class="hda-abs hda-neon hda-neon--react" data-el="analyzeNeon" src="${asset("neon-wrong.png")}" alt="" hidden>
+      <div class="hda-abs hda-bubble hda-bubble--ai" data-el="analyzeBubbleWrap"><img src="${asset("robot-icon.jpg")}" alt=""><span data-el="analyzeBubble"><em>AI</em>解析が<br>完了したぞ！</span></div>
       <div class="hda-abs hda-steps-wrap hda-steps" data-el="steps2">${stepsHtml(2).replace('<div class="hda-steps">', "").replace(/<\/div>\s*$/, "")}</div>
       <h2 class="hda-abs hda-h1" data-el="analyzeTitle">AI解析が完了しました！<span class="hda-h1sub" data-el="analyzeSub">種類を確認して、重量を入力してください。</span></h2>
       <div class="hda-abs hda-panel">
@@ -198,7 +199,7 @@
       <div class="hda-screen__bg"><img src="${asset("bg-warehouse.jpg")}" alt=""></div>
       ${sideDeco}
       <img class="hda-abs hda-chara hda-chara--main hda-chara--thumbs" src="${asset("nakamura-full2.png")}" alt="">
-      <img class="hda-abs hda-neon" src="${asset("neon-happy.jpg")}" alt="いい電線だ！ハッピー価格で I'LL BE BACK">
+      <img class="hda-abs hda-neon" src="${asset("neon-happy.png")}" alt="いい電線だ！ハッピー価格で I'LL BE BACK">
       <div class="hda-abs hda-steps" data-el="steps3">${stepsHtml(3).replace('<div class="hda-steps">', "").replace(/<\/div>\s*$/, "")}</div>
       <h2 class="hda-abs hda-h1">査定が完了しました！<span class="hda-h1sub">アップロードした電線の査定結果です。</span></h2>
       <div class="hda-abs hda-card" data-el="card">
@@ -380,12 +381,38 @@
       if (!res.ok) throw new Error("API " + res.status);
       const j = await res.json();
       if (!j || !j.category) throw new Error("bad response");
-      return { type: j.category, confidence: Number(j.confidence) || 0, reason: j.reason || "", source: "ai" };
+      return { type: j.category, confidence: Number(j.confidence) || 0, reason: j.reason || "", subject: j.subject || (j.is_cable === false ? "other" : "cable"), source: "ai" };
     }
     // ブラウザ内簡易判定（APIなしのフォールバック）
     // 1) 灰色が支配的 → Fケーブル
     // 2) 銅色の丸い断面ブロブを抽出し、周囲が黒い被覆だけなら単心（8割候補）、他の芯線や介在物が見えれば多心（6割）
     // 3) 単心は「被覆の厚み / 導体半径」から銅の重量比を推定し、0.72以上を8割とする
+    // 肌色マスクの最大連結成分の形状で「頭」らしさを判定（面積12%以上・外接矩形の充填率.55以上・縦横比.5〜2・円形度(周長²/4πS)3以下）
+    function isHeadBlob(mask0, W, H) {
+      const N = W * H, lab = new Int32Array(N), queue = new Int32Array(N);
+      // クロージング（膨張2→収縮2）でJPEGノイズの穴を埋める（穴があると周長が跳ね上がる）
+      const dil = (m) => { const o = new Uint8Array(N); for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x; if (m[i] || (y > 0 && m[i - W]) || (y < H - 1 && m[i + W]) || (x > 0 && m[i - 1]) || (x < W - 1 && m[i + 1])) o[i] = 1; } return o; };
+      const ero = (m) => { const o = new Uint8Array(N); for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x; if (m[i] && (y === 0 || m[i - W]) && (y === H - 1 || m[i + W]) && (x === 0 || m[i - 1]) && (x === W - 1 || m[i + 1])) o[i] = 1; } return o; };
+      let mask = mask0; for (let k = 0; k < 2; k++) mask = dil(mask); for (let k = 0; k < 2; k++) mask = ero(mask);
+      let best = null, nid = 0;
+      for (let s0 = 0; s0 < N; s0++) {
+        if (!mask[s0] || lab[s0]) continue;
+        nid++; let qh = 0, qt = 0; queue[qt++] = s0; lab[s0] = nid;
+        let area = 0, per = 0, minx = W, maxx = 0, miny = H, maxy = 0;
+        while (qh < qt) {
+          const i = queue[qh++]; const y = (i / W) | 0, x = i - y * W;
+          area++; if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y;
+          let edge = false;
+          const nb = [y > 0 ? i - W : -1, y < H - 1 ? i + W : -1, x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1];
+          for (const j of nb) { if (j < 0 || !mask[j]) { edge = true; continue; } if (!lab[j]) { lab[j] = nid; queue[qt++] = j; } }
+          if (edge) per++;
+        }
+        if (!best || area > best.area) best = { area, per, bw: maxx - minx + 1, bh: maxy - miny + 1 };
+      }
+      if (!best) return false;
+      const fill = best.area / (best.bw * best.bh), asp = best.bw / best.bh, circ = best.per * best.per / (4 * Math.PI * best.area);
+      return best.area / N >= .12 && fill >= .55 && asp >= .5 && asp <= 2 && circ <= 3;
+    }
     function classifyLocal() {
       const src = state.canvas;
       const W = 320, H = Math.max(1, Math.round((src.height / src.width) * W));
@@ -393,7 +420,7 @@
       const ctx = c.getContext("2d"); ctx.drawImage(src, 0, 0, W, H);
       const px = ctx.getImageData(0, 0, W, H).data;
       const N = W * H;
-      const copper = new Uint8Array(N), sheath = new Uint8Array(N), colored = new Uint8Array(N);
+      const copper = new Uint8Array(N), sheath = new Uint8Array(N), colored = new Uint8Array(N), skinM = new Uint8Array(N);
       let gray = 0, dark = 0, cop = 0;
       for (let i = 0; i < N; i++) {
         const r = px[i * 4], g = px[i * 4 + 1], b = px[i * 4 + 2];
@@ -401,12 +428,16 @@
         const lum = .299 * r + .587 * g + .114 * b, sat = mx === 0 ? 0 : (mx - mn) / mx;
         const isC = r > 95 && r > g * 1.25 && g >= b * .95 && sat > .3 && lum > 50;
         if (isC) { copper[i] = 1; cop++; continue; }
+        // 肌色（明るく低〜中彩度で R>G>B）: 頭・顔の判定に使う
+        if (lum > 110 && r > g && g > b && r - b > 25 && r - b < 130 && sat > .15 && sat < .6) skinM[i] = 1;
         if (lum < 70) dark++;
         if (sat < .16 && lum >= 95 && lum <= 215) gray++;
         if (lum < 90 || (sat < .2 && lum < 150)) sheath[i] = 1;
         else if (sat > .3) colored[i] = 1;
       }
       const gR = gray / N, dR = dark / N, cR = cop / N;
+      // 肌色の最大ブロブが「大きく・丸く・詰まっている」→ 人の頭（中村）扱い。木目やベージュの床は細長い／穴だらけなので除外される
+      if (cR < .03 && isHeadBlob(skinM, W, H)) return { type: "unknown", subject: "bald_head", confidence: .3, reason: "電線ではなく、人の頭のようです。電線の断面が見えるように撮ってください。", source: "local" };
       if (gR > .30 && gR > dR * 1.2 && cR < .05) {
         return { type: "f", confidence: Math.min(.85, .5 + gR * .6), reason: "灰色の被覆が多く写っているため、Fケーブル（VA線）と推定しました。", source: "local" };
       }
@@ -433,7 +464,9 @@
         if (fill > .45 && aspect > .45 && aspect < 2.2) blobs.push({ id: nid, area, cy: sy / area, cx: sx / area, rc: Math.sqrt(area / Math.PI) });
       }
       if (!blobs.length) {
-        return { type: "unknown", confidence: .2, reason: "断面（切り口）がはっきり写っていないため判別できませんでした。切り口が見えるように撮るか、下から種類を選んでください。", source: "local" };
+        // 銅の断面が無い: 肌色が広く写っていれば「頭（中村）」、それ以外は「電線ではない」扱い
+        if (dR < .35 && gR < .25) return { type: "unknown", subject: "other", confidence: .25, reason: "電線が写っていないようです。電線の切り口が見えるように撮り直してください。", source: "local" };
+        return { type: "unknown", subject: "cable", confidence: .2, reason: "断面（切り口）がはっきり写っていないため判別できませんでした。切り口が見えるように撮るか、下から種類を選んでください。", source: "local" };
       }
       const at = (cy, cx, sn, cs, d) => { const y = Math.round(cy + sn * d), x = Math.round(cx + cs * d); return (y < 0 || y >= H || x < 0 || x >= W) ? -1 : y * W + x; };
       let ev8 = 0, ev6 = 0;
@@ -513,8 +546,20 @@
       el("resultHeadText").textContent = r.source === "ai" ? "AI解析完了" : "AI解析完了（簡易判定）";
       el("analyzeTitle").firstChild.textContent = state.aiType ? "AI解析が完了しました！" : "種類を選んでください";
       el("analyzeSub").textContent = state.aiType ? "種類を確認して、重量を入力してください。" : "写真からは判別できませんでした。近い種類をタップしてください。";
+      // 電線以外(other) / ハゲ頭(bald_head) のリアクション: 人物とネオンキャッチを差し替える
+      const react = state.aiType ? "" : (r.subject === "bald_head" ? "bald" : r.subject === "other" ? "other" : "");
+      state.react = react;
+      el("analyzeChara").src = asset(react === "bald" ? "nakamura-self.png" : react === "other" ? "nakamura-shock.png" : "nakamura-full1.png");
+      el("analyzeChara").classList.toggle("hda-chara--react", !!react);
+      el("analyzeNeon").hidden = !react;
+      el("analyzeNeon").src = asset(react === "bald" ? "neon-nakamura.png" : "neon-wrong.png");
+      el("analyzeNeon").alt = react === "bald" ? "それは中村だ！ハッピー価格で I'LL BE BACK" : "それは違う！ハッピー価格で I'LL BE BACK";
+      el("analyzeBubbleWrap").hidden = !!react;
+      el("analyzeTitle").classList.toggle("is-react", !!react);
       el("analyzeBubble").innerHTML = state.aiType ? "<em>AI</em>解析が<br>完了したぞ！" : "もう少し<br>近づいて撮ってくれ！";
-      el("resultName").textContent = state.aiType ? TYPES[state.aiType].name : "判別できませんでした";
+      if (react === "bald") { el("analyzeTitle").firstChild.textContent = "それは中村だ！"; el("analyzeSub").textContent = "中村は買い取れません。電線の写真で査定してください。"; }
+      else if (react === "other") { el("analyzeTitle").firstChild.textContent = "それは電線じゃない！"; el("analyzeSub").textContent = "電線が写っていません。電線の写真で撮り直してください。"; }
+      el("resultName").textContent = state.aiType ? TYPES[state.aiType].name : react === "bald" ? "中村（電線ではありません）" : react === "other" ? "電線ではありません" : "判別できませんでした";
       el("resultTag").textContent = state.aiType ? TYPES[state.aiType].tag : "下から種類を選んでください";
       const pct = Math.round(Math.max(0, Math.min(1, r.confidence)) * 100);
       el("confPct").textContent = pct + "%";
