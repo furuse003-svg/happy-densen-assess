@@ -465,5 +465,6 @@
 /* ---------- 電線以外／ハゲ頭のリアクション（AI解析画面） ---------- */
 .hda-screen--analyze .hda-chara--react { top: 30px; left: 500px; width: 340px; }
 .hda-screen--analyze .hda-neon--react { top: 196px; left: 540px; width: 250px; transform: rotate(-4deg); z-index: 5; animation: hdaNeonGlow 1.6s ease-in-out infinite, hdaNeonPop .45s cubic-bezier(.2,1.4,.4,1) both; }
-.hda-screen--analyze .hda-h1.is-react { width: 500px; }
+.hda-screen--analyze .hda-h1.is-subonly { width: 440px; }
+.hda-screen--analyze .hda-h1.is-subonly .hda-h1sub { margin-top: 0; font-size: 22px; }
 @keyframes hdaNeonPop { from { opacity: 0; transform: rotate(-4deg) scale(.6); } to { opacity: 1; transform: rotate(-4deg) scale(1); } }

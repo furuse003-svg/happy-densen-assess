@@ -565,7 +565,11 @@
       el("analyzeChara").classList.remove("hda-chara--react");
       el("analyzeNeon").hidden = true;
       el("analyzeBubbleWrap").hidden = false;
-      el("analyzeTitle").hidden = !!react; // 見出しはキャッチと内容が重複するので出さない
+      // 見出しはキャッチと内容が重複するので出さない。補足文（撮り直しの案内）だけ残す
+      el("analyzeTitle").firstChild.textContent = react ? "" : (state.aiType ? "AI解析が完了しました！" : "種類を選んでください");
+      el("analyzeTitle").classList.toggle("is-subonly", !!react);
+      if (react === "bald") el("analyzeSub").textContent = "中村は買い取れません。電線の切り口が見えるように撮り直してください。";
+      else if (react === "other") el("analyzeSub").textContent = "電線が写っていません。電線の切り口が見えるように撮り直してください。";
       el("analyzeBubble").innerHTML = state.aiType ? "<em>AI</em>解析が<br>完了したぞ！" : "もう少し<br>近づいて撮ってくれ！";
       el("resultName").textContent = state.aiType ? TYPES[state.aiType].name : react === "bald" ? "中村（電線ではありません）" : react === "other" ? "電線ではありません" : "判別できませんでした";
       el("resultTag").textContent = state.aiType ? TYPES[state.aiType].tag : "下から種類を選んでください";
