@@ -499,7 +499,8 @@
 /* ---------- 電線以外／ハゲ頭のリアクション（AI解析画面） ---------- */
 .hda-screen--analyze .hda-chara--react { top: 30px; left: 500px; width: 340px; }
 .hda-screen--analyze .hda-neon--react { top: 196px; left: 540px; width: 250px; transform: rotate(-4deg); z-index: 5; animation: hdaNeonGlow 1.6s ease-in-out infinite, hdaNeonPop .45s cubic-bezier(.2,1.4,.4,1) both; }
-.hda-screen--analyze .hda-h1.is-react { width: 500px; }
+.hda-screen--analyze .hda-h1.is-subonly { top: 326px; width: 440px; }   /* ステップ表示との間に24px以上あける */
+.hda-screen--analyze .hda-h1.is-subonly .hda-h1sub { margin-top: 0; font-size: 22px; line-height: 1.5; }
 @keyframes hdaNeonPop { from { opacity: 0; transform: rotate(-4deg) scale(.6); } to { opacity: 1; transform: rotate(-4deg) scale(1); } }
 
 </style>
@@ -959,31 +960,41 @@ window.HAPPY_ASSETS = {"bg-cyber.jpg": "data:image/jpeg;base64,/9j/4AAQSkZJRgABA
     // 1) 灰色が支配的 → Fケーブル
     // 2) 銅色の丸い断面ブロブを抽出し、周囲が黒い被覆だけなら単心（8割候補）、他の芯線や介在物が見えれば多心（6割）
     // 3) 単心は「被覆の厚み / 導体半径」から銅の重量比を推定し、0.72以上を8割とする
-    // 肌色マスクの最大連結成分の形状で「頭」らしさを判定（面積12%以上・外接矩形の充填率.55以上・縦横比.5〜2・円形度(周長²/4πS)3以下）
+    // 肌色マスクの最大連結成分の形状で「頭」らしさを判定
+    //  目・口・眼鏡などの穴は外接矩形内で埋めてから、面積12%以上・充填率.40以上・縦横比.5〜2 を要求
+    //  （木目やベージュの床は細長い／小さい／穴だらけなので除外される）
     function isHeadBlob(mask0, W, H) {
       const N = W * H, lab = new Int32Array(N), queue = new Int32Array(N);
-      // クロージング（膨張2→収縮2）でJPEGノイズの穴を埋める（穴があると周長が跳ね上がる）
       const dil = (m) => { const o = new Uint8Array(N); for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x; if (m[i] || (y > 0 && m[i - W]) || (y < H - 1 && m[i + W]) || (x > 0 && m[i - 1]) || (x < W - 1 && m[i + 1])) o[i] = 1; } return o; };
       const ero = (m) => { const o = new Uint8Array(N); for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x; if (m[i] && (y === 0 || m[i - W]) && (y === H - 1 || m[i + W]) && (x === 0 || m[i - 1]) && (x === W - 1 || m[i + 1])) o[i] = 1; } return o; };
-      let mask = mask0; for (let k = 0; k < 2; k++) mask = dil(mask); for (let k = 0; k < 2; k++) mask = ero(mask);
+      let mask = mask0; for (let k = 0; k < 3; k++) mask = dil(mask); for (let k = 0; k < 3; k++) mask = ero(mask);
       let best = null, nid = 0;
       for (let s0 = 0; s0 < N; s0++) {
         if (!mask[s0] || lab[s0]) continue;
         nid++; let qh = 0, qt = 0; queue[qt++] = s0; lab[s0] = nid;
-        let area = 0, per = 0, minx = W, maxx = 0, miny = H, maxy = 0;
+        let area = 0, minx = W, maxx = 0, miny = H, maxy = 0;
         while (qh < qt) {
           const i = queue[qh++]; const y = (i / W) | 0, x = i - y * W;
           area++; if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y;
-          let edge = false;
           const nb = [y > 0 ? i - W : -1, y < H - 1 ? i + W : -1, x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1];
-          for (const j of nb) { if (j < 0 || !mask[j]) { edge = true; continue; } if (!lab[j]) { lab[j] = nid; queue[qt++] = j; } }
-          if (edge) per++;
+          for (const j of nb) { if (j >= 0 && mask[j] && !lab[j]) { lab[j] = nid; queue[qt++] = j; } }
         }
-        if (!best || area > best.area) best = { area, per, bw: maxx - minx + 1, bh: maxy - miny + 1 };
+        if (!best || area > best.area) best = { id: nid, area, minx, maxx, miny, maxy };
       }
       if (!best) return false;
-      const fill = best.area / (best.bw * best.bh), asp = best.bw / best.bh, circ = best.per * best.per / (4 * Math.PI * best.area);
-      return best.area / N >= .12 && fill >= .55 && asp >= .5 && asp <= 2 && circ <= 3;
+      // 外接矩形（1px余白）内で、ブロブ外から到達できない画素＝穴 を埋めた面積を求める
+      const bw = best.maxx - best.minx + 1, bh = best.maxy - best.miny + 1, BW = bw + 2, BH = bh + 2;
+      const inside = new Uint8Array(BW * BH), reach = new Uint8Array(BW * BH), q2 = new Int32Array(BW * BH);
+      for (let y = 0; y < bh; y++) for (let x = 0; x < bw; x++) if (lab[(best.miny + y) * W + best.minx + x] === best.id) inside[(y + 1) * BW + x + 1] = 1;
+      let qh = 0, qt = 0; q2[qt++] = 0; reach[0] = 1;
+      while (qh < qt) {
+        const i = q2[qh++]; const y = (i / BW) | 0, x = i - y * BW;
+        const nb = [y > 0 ? i - BW : -1, y < BH - 1 ? i + BW : -1, x > 0 ? i - 1 : -1, x < BW - 1 ? i + 1 : -1];
+        for (const j of nb) { if (j >= 0 && !inside[j] && !reach[j]) { reach[j] = 1; q2[qt++] = j; } }
+      }
+      let filled = 0; for (let i = 0; i < BW * BH; i++) if (!reach[i]) filled++;
+      const fill = filled / (bw * bh), asp = bw / bh;
+      return filled / N >= .12 && fill >= .4 && asp >= .5 && asp <= 2;
     }
     function classifyLocal() {
       const src = state.canvas;
@@ -999,9 +1010,9 @@ window.HAPPY_ASSETS = {"bg-cyber.jpg": "data:image/jpeg;base64,/9j/4AAQSkZJRgABA
         const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
         const lum = .299 * r + .587 * g + .114 * b, sat = mx === 0 ? 0 : (mx - mn) / mx;
         const isC = r > 95 && r > g * 1.25 && g >= b * .95 && sat > .3 && lum > 50;
+        // 肌色（明るく低〜中彩度で R>G>B）: 頭・顔の判定に使う。顔は銅色判定にも掛かるので銅より先に見る
+        if (lum > 120 && r > g && g > b && r - b > 25 && r - b < 130 && sat > .15 && sat < .5) skinM[i] = 1;
         if (isC) { copper[i] = 1; cop++; continue; }
-        // 肌色（明るく低〜中彩度で R>G>B）: 頭・顔の判定に使う
-        if (lum > 110 && r > g && g > b && r - b > 25 && r - b < 130 && sat > .15 && sat < .6) skinM[i] = 1;
         if (lum < 70) dark++;
         if (sat < .16 && lum >= 95 && lum <= 215) gray++;
         if (lum < 90 || (sat < .2 && lum < 150)) sheath[i] = 1;
@@ -1009,7 +1020,7 @@ window.HAPPY_ASSETS = {"bg-cyber.jpg": "data:image/jpeg;base64,/9j/4AAQSkZJRgABA
       }
       const gR = gray / N, dR = dark / N, cR = cop / N;
       // 肌色の最大ブロブが「大きく・丸く・詰まっている」→ 人の頭（中村）扱い。木目やベージュの床は細長い／穴だらけなので除外される
-      if (cR < .03 && isHeadBlob(skinM, W, H)) return { type: "unknown", subject: "bald_head", confidence: .3, reason: "電線ではなく、人の頭のようです。電線の断面が見えるように撮ってください。", source: "local" };
+      if (isHeadBlob(skinM, W, H)) return { type: "unknown", subject: "bald_head", confidence: .3, reason: "電線ではなく、人の頭のようです。電線の断面が見えるように撮ってください。", source: "local" };
       if (gR > .30 && gR > dR * 1.2 && cR < .05) {
         return { type: "f", confidence: Math.min(.85, .5 + gR * .6), reason: "灰色の被覆が多く写っているため、Fケーブル（VA線）と推定しました。", source: "local" };
       }
@@ -1109,6 +1120,7 @@ window.HAPPY_ASSETS = {"bg-cyber.jpg": "data:image/jpeg;base64,/9j/4AAQSkZJRgABA
       state.mode = "photo";
       showResult(result);
       goScreen("analyze");
+      showReaction();
     }
     function showResult(r) {
       state.aiType = TYPES[r.type] ? r.type : null;
@@ -1118,19 +1130,20 @@ window.HAPPY_ASSETS = {"bg-cyber.jpg": "data:image/jpeg;base64,/9j/4AAQSkZJRgABA
       el("resultHeadText").textContent = r.source === "ai" ? "AI解析完了" : "AI解析完了（簡易判定）";
       el("analyzeTitle").firstChild.textContent = state.aiType ? "AI解析が完了しました！" : "種類を選んでください";
       el("analyzeSub").textContent = state.aiType ? "種類を確認して、重量を入力してください。" : "写真からは判別できませんでした。近い種類をタップしてください。";
-      // 電線以外(other) / ハゲ頭(bald_head) のリアクション: 人物とネオンキャッチを差し替える
+      // 電線以外(other) / ハゲ頭(bald_head) のリアクション: 解析完了の表示後に人物とネオンキャッチを差し替える（showReaction）
       const react = state.aiType ? "" : (r.subject === "bald_head" ? "bald" : r.subject === "other" ? "other" : "");
       state.react = react;
-      el("analyzeChara").src = asset(react === "bald" ? "nakamura-self.png" : react === "other" ? "nakamura-shock.png" : "nakamura-full1.png");
-      el("analyzeChara").classList.toggle("hda-chara--react", !!react);
-      el("analyzeNeon").hidden = !react;
-      el("analyzeNeon").src = asset(react === "bald" ? "neon-nakamura.png" : "neon-wrong.png");
-      el("analyzeNeon").alt = react === "bald" ? "それは中村だ！ハッピー価格で I'LL BE BACK" : "それは違う！ハッピー価格で I'LL BE BACK";
-      el("analyzeBubbleWrap").hidden = !!react;
-      el("analyzeTitle").classList.toggle("is-react", !!react);
+      clearTimeout(state.reactTimer);
+      el("analyzeChara").src = asset("nakamura-full1.png");
+      el("analyzeChara").classList.remove("hda-chara--react");
+      el("analyzeNeon").hidden = true;
+      el("analyzeBubbleWrap").hidden = false;
+      // 見出しはキャッチと内容が重複するので出さない。補足文（撮り直しの案内）だけ残す
+      el("analyzeTitle").firstChild.textContent = react ? "" : (state.aiType ? "AI解析が完了しました！" : "種類を選んでください");
+      el("analyzeTitle").classList.toggle("is-subonly", !!react);
+      if (react === "bald") el("analyzeSub").textContent = "中村は買い取れません。電線の切り口が見えるように撮り直してください。";
+      else if (react === "other") el("analyzeSub").textContent = "電線が写っていません。電線の切り口が見えるように撮り直してください。";
       el("analyzeBubble").innerHTML = state.aiType ? "<em>AI</em>解析が<br>完了したぞ！" : "もう少し<br>近づいて撮ってくれ！";
-      if (react === "bald") { el("analyzeTitle").firstChild.textContent = "それは中村だ！"; el("analyzeSub").textContent = "中村は買い取れません。電線の写真で査定してください。"; }
-      else if (react === "other") { el("analyzeTitle").firstChild.textContent = "それは電線じゃない！"; el("analyzeSub").textContent = "電線が写っていません。電線の写真で撮り直してください。"; }
       el("resultName").textContent = state.aiType ? TYPES[state.aiType].name : react === "bald" ? "中村（電線ではありません）" : react === "other" ? "電線ではありません" : "判別できませんでした";
       el("resultTag").textContent = state.aiType ? TYPES[state.aiType].tag : "下から種類を選んでください";
       const pct = Math.round(Math.max(0, Math.min(1, r.confidence)) * 100);
@@ -1143,6 +1156,22 @@ window.HAPPY_ASSETS = {"bg-cyber.jpg": "data:image/jpeg;base64,/9j/4AAQSkZJRgABA
       el("typesLead").textContent = "違う種類なら、タップして選び直してください。";
       el("retake").textContent = "← 写真を撮り直す";
       setType(state.aiType);
+    }
+    // 解析完了画面が出てから一拍おいて、人物差し替え＋ネオンキャッチをポップイン
+    function showReaction() {
+      const react = state.react; if (!react) return;
+      state.reactTimer = setTimeout(() => {
+        if (state.screen !== "analyze" || state.react !== react) return;
+        el("analyzeBubbleWrap").hidden = true;
+        el("analyzeChara").src = asset(react === "bald" ? "nakamura-self.png" : "nakamura-shock.png");
+        el("analyzeChara").classList.add("hda-chara--react");
+        const neon = el("analyzeNeon");
+        neon.src = asset(react === "bald" ? "neon-nakamura.png" : "neon-wrong.png");
+        neon.alt = react === "bald" ? "それは中村だ！ハッピー価格で I'LL BE BACK" : "それは違う！ハッピー価格で I'LL BE BACK";
+        neon.hidden = false;
+        Sound.reaction();
+        vibrate([40, 60, 40]);
+      }, 900);
     }
     function setType(key) {
       state.type = TYPES[key] ? key : null;
@@ -1209,6 +1238,8 @@ window.HAPPY_ASSETS = {"bg-cyber.jpg": "data:image/jpeg;base64,/9j/4AAQSkZJRgABA
       },
       // サーボの駆動音（回転中のカチカチ）
       tick() { this.noise(.035, .05, 0, 2600, 2); this.tone(180, .04, "square", .02); },
+      // リアクション（電線以外／中村）: 金属一撃＋警告ブザー
+      reaction() { this.metal(420, 0, .14, .8); this.impact(.02, .3); this.tone(220, .18, "square", .05, .12); this.tone(165, .22, "square", .05, .3); },
       // リール停止: 金属の打撃
       stop() { this.metal(520 + Math.random() * 60, 0, .11, .7); this.tone(70, .25, "sine", .12); },
       // 回転中のドローン（開始/停止）
@@ -1424,6 +1455,7 @@ window.HAPPY_ASSETS = {"bg-cyber.jpg": "data:image/jpeg;base64,/9j/4AAQSkZJRgABA
     /* リセット */
     function resetAll() {
       state.dataUrl = state.base64 = null; state.aiType = state.type = null; state.canvas = null; state.mode = "photo";
+      clearTimeout(state.reactTimer); state.react = "";
       el("preview").hidden = true; el("preview").src = "";
       el("dropInner").hidden = false;
       el("drop").classList.remove("has-image");
