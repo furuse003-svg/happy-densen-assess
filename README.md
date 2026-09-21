@@ -95,7 +95,7 @@ pricesEndpoint:   "https://happy-densen-api.<account>.workers.dev/api/prices",
 ## ハッピー演出（ネオンサイン + サムズアップ中村）
 
 - 「査定してもらう」を押すたびに抽選し、`config.js` の `happyChance`（既定 0.33 = 約1/3）で当たり。
-- 当たると、リールが回り始めた瞬間にピンクのネオンサイン「いい電線だ！ハッピー価格で I'LL BE BACK」（`assess/img/neon-happy.jpg`）が光り、サムズアップの中村（`nakamura-thumbsup.jpg`）が出現。PC幅では右サイドの中村が入れ替わる。
+- 当たると、リールが回り始めた瞬間にピンクのネオンサイン「いい電線だ！ハッピー価格で I'LL BE BACK」（`assess/img/neon-happy.png`・枠の外は透過）が光り、サムズアップの中村（`nakamura-thumbsup.jpg`）が出現。PC幅では右サイドの中村が入れ替わる。
 - 当たらなくても金額は同じで、「査定完了だ！」の控えめな表示になる（画面にも「演出で金額には影響しません」と明記）。
 - 動作確認用に `?happy=1`（必ず当たり）/ `?happy=0`（当たらない）で強制できる。「もう一度査定する」で再抽選。
 - 効果音は WebAudio で合成した独自音（既存機種の音源・メロディの複製ではない）。初期OFF、右上の 🔇 で ON。

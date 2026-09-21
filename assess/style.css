@@ -88,8 +88,8 @@
 .hda-checks li { display: flex; align-items: center; gap: 12px; }
 .hda-checks li::before { content: "✓"; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 4px; background: var(--hda-yellow); color: #1a1a1a; font-size: 16px; font-weight: 900; line-height: 1; }
 
-/* ネオンサイン（背景付き画像） */
-.hda-neon { -webkit-mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, #000 62%, transparent 100%); mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, #000 62%, transparent 100%); filter: drop-shadow(0 0 14px rgb(255 45 149 / 80%)); animation: hdaNeonGlow 1.6s ease-in-out infinite; }
+/* ネオンサイン（枠の外は透過PNG） */
+.hda-neon { filter: drop-shadow(0 0 14px rgb(255 45 149 / 80%)); animation: hdaNeonGlow 1.6s ease-in-out infinite; }
 @keyframes hdaNeonGlow { 0%, 100% { filter: drop-shadow(0 0 14px rgb(255 45 149 / 80%)) brightness(1); } 50% { filter: drop-shadow(0 0 28px rgb(255 45 149 / 100%)) brightness(1.2); } }
 
 /* ---------- ボタン ---------- */
@@ -461,3 +461,9 @@
   .hd-assess * { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
   .hda-reel__strip { transition-duration: .01ms !important; }
 }
+
+/* ---------- 電線以外／ハゲ頭のリアクション（AI解析画面） ---------- */
+.hda-screen--analyze .hda-chara--react { top: 30px; left: 500px; width: 340px; }
+.hda-screen--analyze .hda-neon--react { top: 196px; left: 540px; width: 250px; transform: rotate(-4deg); z-index: 5; animation: hdaNeonGlow 1.6s ease-in-out infinite, hdaNeonPop .45s cubic-bezier(.2,1.4,.4,1) both; }
+.hda-screen--analyze .hda-h1.is-react { width: 500px; }
+@keyframes hdaNeonPop { from { opacity: 0; transform: rotate(-4deg) scale(.6); } to { opacity: 1; transform: rotate(-4deg) scale(1); } }
