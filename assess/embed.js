@@ -388,7 +388,7 @@
     // 2) 銅色の丸い断面ブロブを抽出し、周囲が黒い被覆だけなら単心（8割候補）、他の芯線や介在物が見えれば多心（6割）
     // 3) 単心は「被覆の厚み / 導体半径」から銅の重量比を推定し、0.72以上を8割とする
     // 肌色マスクの最大連結成分の形状で「頭」らしさを判定
-    //  目・口・眼鏡などの穴は外接矩形内で埋めてから、面積12%以上・充填率.40以上・縦横比.5〜2 を要求
+    //  目・口・眼鏡などの穴は外接矩形内で埋めてから、面積9%以上・充填率.40以上・縦横比.5〜2 を要求
     //  （木目やベージュの床は細長い／小さい／穴だらけなので除外される）
     function isHeadBlob(mask0, W, H) {
       const N = W * H, lab = new Int32Array(N), queue = new Int32Array(N);
@@ -421,7 +421,7 @@
       }
       let filled = 0; for (let i = 0; i < BW * BH; i++) if (!reach[i]) filled++;
       const fill = filled / (bw * bh), asp = bw / bh;
-      return filled / N >= .12 && fill >= .4 && asp >= .5 && asp <= 2;
+      return filled / N >= .09 && fill >= .4 && asp >= .5 && asp <= 2;
     }
     function classifyLocal() {
       const NOT_CABLE = () => ({ type: "unknown", subject: "other", confidence: .25, reason: "電線が写っていないようです。電線の切り口が見えるように撮り直してください。", source: "local" });
