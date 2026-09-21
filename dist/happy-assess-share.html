@@ -997,6 +997,7 @@ window.HAPPY_ASSETS = {"bg-cyber.jpg": "data:image/jpeg;base64,/9j/4AAQSkZJRgABA
       return filled / N >= .12 && fill >= .4 && asp >= .5 && asp <= 2;
     }
     function classifyLocal() {
+      const NOT_CABLE = () => ({ type: "unknown", subject: "other", confidence: .25, reason: "電線が写っていないようです。電線の切り口が見えるように撮り直してください。", source: "local" });
       const src = state.canvas;
       const W = 320, H = Math.max(1, Math.round((src.height / src.width) * W));
       const c = document.createElement("canvas"); c.width = W; c.height = H;
@@ -1004,7 +1005,7 @@ window.HAPPY_ASSETS = {"bg-cyber.jpg": "data:image/jpeg;base64,/9j/4AAQSkZJRgABA
       const px = ctx.getImageData(0, 0, W, H).data;
       const N = W * H;
       const copper = new Uint8Array(N), sheath = new Uint8Array(N), colored = new Uint8Array(N), skinM = new Uint8Array(N);
-      let gray = 0, dark = 0, cop = 0;
+      let gray = 0, dark = 0, cop = 0, white = 0;
       for (let i = 0; i < N; i++) {
         const r = px[i * 4], g = px[i * 4 + 1], b = px[i * 4 + 2];
         const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
@@ -1014,13 +1015,16 @@ window.HAPPY_ASSETS = {"bg-cyber.jpg": "data:image/jpeg;base64,/9j/4AAQSkZJRgABA
         if (lum > 120 && r > g && g > b && r - b > 25 && r - b < 130 && sat > .15 && sat < .5) skinM[i] = 1;
         if (isC) { copper[i] = 1; cop++; continue; }
         if (lum < 70) dark++;
+        if (lum > 225) white++;
         if (sat < .16 && lum >= 95 && lum <= 215) gray++;
         if (lum < 90 || (sat < .2 && lum < 150)) sheath[i] = 1;
         else if (sat > .3) colored[i] = 1;
       }
-      const gR = gray / N, dR = dark / N, cR = cop / N;
+      const gR = gray / N, dR = dark / N, cR = cop / N, wR = white / N;
       // 肌色の最大ブロブが「大きく・丸く・詰まっている」→ 人の頭（中村）扱い。木目やベージュの床は細長い／穴だらけなので除外される
       if (isHeadBlob(skinM, W, H)) return { type: "unknown", subject: "bald_head", confidence: .3, reason: "電線ではなく、人の頭のようです。電線の断面が見えるように撮ってください。", source: "local" };
+      // 白が画面の35%以上（スクリーンショット・書類・白背景の物）は電線写真ではない
+      if (wR > .35) return NOT_CABLE();
       if (gR > .30 && gR > dR * 1.2 && cR < .05) {
         return { type: "f", confidence: Math.min(.85, .5 + gR * .6), reason: "灰色の被覆が多く写っているため、Fケーブル（VA線）と推定しました。", source: "local" };
       }
@@ -1046,11 +1050,10 @@ window.HAPPY_ASSETS = {"bg-cyber.jpg": "data:image/jpeg;base64,/9j/4AAQSkZJRgABA
         const bw = maxx - minx + 1, bh = maxy - miny + 1, fill = area / (bw * bh), aspect = bw / bh;
         if (fill > .45 && aspect > .45 && aspect < 2.2) blobs.push({ id: nid, area, cy: sy / area, cx: sx / area, rc: Math.sqrt(area / Math.PI) });
       }
-      if (!blobs.length) {
-        // 銅の断面が無い: 肌色が広く写っていれば「頭（中村）」、それ以外は「電線ではない」扱い
-        if (dR < .35 && gR < .25) return { type: "unknown", subject: "other", confidence: .25, reason: "電線が写っていないようです。電線の切り口が見えるように撮り直してください。", source: "local" };
-        return { type: "unknown", subject: "cable", confidence: .2, reason: "断面（切り口）がはっきり写っていないため判別できませんでした。切り口が見えるように撮るか、下から種類を選んでください。", source: "local" };
-      }
+      // 銅の断面が見つからない → 判別不能はすべて「それは違う」扱い（種類は手で選べる）
+      if (!blobs.length) return NOT_CABLE();
+      // 黒い被覆がほとんど無いのに銅色の点がある（木目・オレンジ色のアイコン等）→ 電線ではない
+      if (dR < .15) return NOT_CABLE();
       const at = (cy, cx, sn, cs, d) => { const y = Math.round(cy + sn * d), x = Math.round(cx + cs * d); return (y < 0 || y >= H || x < 0 || x >= W) ? -1 : y * W + x; };
       let ev8 = 0, ev6 = 0;
       for (const bl of blobs) {
@@ -1096,7 +1099,7 @@ window.HAPPY_ASSETS = {"bg-cyber.jpg": "data:image/jpeg;base64,/9j/4AAQSkZJRgABA
         if (wR >= .72) ev8 += bl.area; else ev6 += bl.area;
       }
       const tot = ev8 + ev6;
-      if (!tot) return { type: "unknown", confidence: .2, reason: "断面をうまく読み取れませんでした。切り口が見えるように撮るか、下から種類を選んでください。", source: "local" };
+      if (!tot) return NOT_CABLE();
       const p8 = ev8 / tot;
       const conf = .5 + .35 * Math.abs(p8 - .5) * 2 * Math.min(1, blobs.length / 4);
       if (p8 >= .5) return { type: "hachi", confidence: conf, reason: "断面の銅が太く、黒い被覆が薄いため、8割銅線と推定しました。", source: "local" };
@@ -1131,7 +1134,7 @@ window.HAPPY_ASSETS = {"bg-cyber.jpg": "data:image/jpeg;base64,/9j/4AAQSkZJRgABA
       el("analyzeTitle").firstChild.textContent = state.aiType ? "AI解析が完了しました！" : "種類を選んでください";
       el("analyzeSub").textContent = state.aiType ? "種類を確認して、重量を入力してください。" : "写真からは判別できませんでした。近い種類をタップしてください。";
       // 電線以外(other) / ハゲ頭(bald_head) のリアクション: 解析完了の表示後に人物とネオンキャッチを差し替える（showReaction）
-      const react = state.aiType ? "" : (r.subject === "bald_head" ? "bald" : r.subject === "other" ? "other" : "");
+      const react = state.aiType ? "" : (r.subject === "bald_head" ? "bald" : "other"); // 判別不能はすべて「それは違う」
       state.react = react;
       clearTimeout(state.reactTimer);
       el("analyzeChara").src = asset("nakamura-full1.png");
@@ -1144,7 +1147,7 @@ window.HAPPY_ASSETS = {"bg-cyber.jpg": "data:image/jpeg;base64,/9j/4AAQSkZJRgABA
       if (react === "bald") el("analyzeSub").textContent = "中村は買い取れません。電線の切り口が見えるように撮り直してください。";
       else if (react === "other") el("analyzeSub").textContent = "電線が写っていません。電線の切り口が見えるように撮り直してください。";
       el("analyzeBubble").innerHTML = state.aiType ? "<em>AI</em>解析が<br>完了したぞ！" : "もう少し<br>近づいて撮ってくれ！";
-      el("resultName").textContent = state.aiType ? TYPES[state.aiType].name : react === "bald" ? "中村（電線ではありません）" : react === "other" ? "電線ではありません" : "判別できませんでした";
+      el("resultName").textContent = state.aiType ? TYPES[state.aiType].name : react === "bald" ? "中村（電線ではありません）" : "電線ではありません";
       el("resultTag").textContent = state.aiType ? TYPES[state.aiType].tag : "下から種類を選んでください";
       const pct = Math.round(Math.max(0, Math.min(1, r.confidence)) * 100);
       el("confPct").textContent = pct + "%";
