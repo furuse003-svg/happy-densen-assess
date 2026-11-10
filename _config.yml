@@ -1,0 +1,12 @@
+# GitHub Pages の公開対象から、表示に不要な大きいフォルダを外す。
+# 素材の原本（画像/ 約54MB）などを含めると、デプロイのファイル同期が10分の制限に達して失敗するため。
+exclude:
+  - 画像
+  - dist
+  - worker
+  - tools
+  - wordpress-plugin
+  - build_share.py
+  - build_wp_plugin.py
+  - サーバー起動.command
+  - CLAUDE.md
