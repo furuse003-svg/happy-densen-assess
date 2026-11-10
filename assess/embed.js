@@ -863,6 +863,7 @@
       el("drop").classList.remove("has-image");
       el("classify").disabled = true;
       el("file").value = "";
+      hideCutin();
       goScreen("upload");
     }
 
@@ -890,7 +891,8 @@
       if (!(state.weight > 0)) { toast("重量を入力してください"); return; }
       showOutcome();
     });
-    el("retry").addEventListener("click", () => { hideCutin(); state.screen = "result"; fitCanvas(); window.scrollTo({ top: Math.max(0, root.getBoundingClientRect().top + window.scrollY - (typeof CFG.scrollOffset === "number" ? CFG.scrollOffset : 80)), behavior: "smooth" }); });
+    // スペシャル画面の「もう一度査定する」は査定前（写真アップロード）まで戻す
+    el("retry").addEventListener("click", () => { if (state.spinning) return; hideCutin(); resetAll(); });
     el("again").addEventListener("click", resetAll);
 
     const sb = el("sound");
