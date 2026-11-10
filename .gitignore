@@ -3,3 +3,7 @@ node_modules/
 worker/.wrangler/
 worker/.dev.vars
 *.log
+
+# ビルド成果物（build_wp_plugin.py / build_share.py が作る）
+dist/wp/
+dist/*.zip
