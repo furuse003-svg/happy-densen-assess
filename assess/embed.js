@@ -48,7 +48,6 @@
   const ICON_CAMERA = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="5" y="13" width="38" height="27" rx="4" fill="none" stroke="currentColor" stroke-width="3"/><path d="M17 13l3-5h8l3 5" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="24" cy="26" r="7" fill="none" stroke="currentColor" stroke-width="3"/></svg>';
   const ICON_AI = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="10" y="10" width="28" height="28" rx="5" fill="none" stroke="currentColor" stroke-width="3"/><text x="24" y="30" text-anchor="middle" font-family="Jost, sans-serif" font-weight="800" font-size="15" fill="currentColor">AI</text><path d="M17 4v6M24 4v6M31 4v6M17 38v6M24 38v6M31 38v6M4 17h6M4 24h6M4 31h6M38 17h6M38 24h6M38 31h6" stroke="currentColor" stroke-width="3"/></svg>';
   const ICON_DOC = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="9" y="5" width="30" height="38" rx="3" fill="none" stroke="currentColor" stroke-width="3"/><path d="M16 16h16M16 24h16M16 32h10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
-  const ICON_LINE = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="6" width="36" height="36" rx="9" fill="#06c755"/><text x="24" y="29" text-anchor="middle" font-family="Jost, sans-serif" font-weight="800" font-size="13" fill="#fff">LINE</text></svg>';
 
   const stepsHtml = (active) => `
     <div class="hda-steps">
@@ -134,19 +133,6 @@
       </section>
 
       ${featuresHtml(true)}
-
-      <section class="hda-abs hda-flow" aria-label="査定の流れ">
-        <p class="hda-flow__title">査定の流れ</p>
-        <div class="hda-flow__inner">
-          <ol class="hda-flow__grid">
-            <li class="hda-flow__step"><span class="hda-flow__num">01</span><span class="hda-flow__icon">${ICON_CAMERA}</span><p>写真をアップロード<small>または重量を入力</small></p></li>
-            <li class="hda-flow__step"><span class="hda-flow__num">02</span><span class="hda-flow__icon">${ICON_AI}</span><p>AIが電線を解析<small>種類・銅率を判定</small></p></li>
-            <li class="hda-flow__step"><span class="hda-flow__num">03</span><span class="hda-flow__icon">${ICON_DOC}</span><p>査定結果をすぐに表示<small>買取価格をご案内</small></p></li>
-            <li class="hda-flow__step"><span class="hda-flow__num">04</span><span class="hda-flow__icon">${ICON_LINE}</span><p>LINEで申込 or<small>店舗・宅配で買取</small></p></li>
-          </ol>
-          <a class="hda-btn hda-btn--line" data-el="lineLink1" href="#" target="_blank" rel="noopener"><span class="hda-line__icon">LINE</span><span>LINEで<br>今すぐ査定！</span><span class="hda-chev" aria-hidden="true">→</span></a>
-        </div>
-      </section>
     </section>
 
     <!-- ========== 画面B: AI解析（種類の確認 + 重量入力） ========== -->
@@ -932,7 +918,7 @@
     });
 
     // LINEボタン（config.lineUrl が無ければ非表示）
-    ["lineLink1", "lineLink2", "lineLink3"].forEach((k) => { if (CFG.lineUrl) el(k).href = CFG.lineUrl; else el(k).hidden = true; });
+    ["lineLink2", "lineLink3"].forEach((k) => { if (CFG.lineUrl) el(k).href = CFG.lineUrl; else el(k).hidden = true; });
 
     renderPrices();
     fetchRemotePrices();
