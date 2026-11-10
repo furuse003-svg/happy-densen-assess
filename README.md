@@ -87,7 +87,7 @@ pricesEndpoint:   "https://happy-densen-api.<account>.workers.dev/api/prices",
 
 - `embed.js` が同じフォルダの `style.css` / `config.js` / `img/` を自動で読み込みます（Google Fonts はサイトで読込済みなら再利用）。
 - ウィジェットは親要素の幅いっぱい（最大1120px・中央寄せ）で描画され、560px以上でタブレット向け、900px以上で右サイド（中村・吹き出し・チェックリスト）付きの2カラムになります。
-- LINEボタン（査定の流れ末尾）は `config.js` の `lineUrl` で制御。空にすれば非表示。
+- 査定前の画面は「タイトル〜特徴4項目（持込・宅配どちらも対応）」まで。「査定の流れ」とその LINE ボタンは 2026-11-10 に削除（WordPress 埋め込みの対象外）。査定結果画面の LINE ボタン2つは `config.js` の `lineUrl` で制御し、空にすれば非表示。
 - サイトに固定ヘッダーがある場合は `config.js` の `scrollOffset`（ステップ切替時のスクロール位置の上余白、既定80px）を高さに合わせてください。
 - 複数箇所に置きたいときは `<div data-happy-assess></div>` を増やせば各々独立して動きます。
 - iframe で隔離したい場合は `widget.html` を `<iframe src="/assess-page/index.html" style="width:100%;border:0;min-height:1100px">` で読み込んでも動きます。
