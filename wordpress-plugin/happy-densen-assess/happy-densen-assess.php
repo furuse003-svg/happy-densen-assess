@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ハッピーデンセン AI自動査定
  * Description: 電線の写真から種類を判別し、重量を入れると参考査定金額を表示する査定ウィジェット。ページにショートコード [happy_assess] を置くと表示されます。買取単価は価格表ページから自動取得できます。
- * Version: 1.0.0
+ * Version: 1.0.1
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: From North
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HDA_VERSION', '1.0.0' );
+define( 'HDA_VERSION', '1.0.1' );
 define( 'HDA_OPTION', 'hda_settings' );
 define( 'HDA_PRICE_CACHE', 'hda_price_cache' );
 define( 'HDA_CRON_HOOK', 'hda_refresh_prices' );
@@ -34,6 +34,7 @@ function hda_default_settings() {
 		'line_url'          => 'https://page.line.me/613fwlhk?openQrModal=true',
 		'scroll_offset'     => 80,                         // 固定ヘッダーの高さ px
 		'classify_endpoint' => '',                         // AI判定APIのURL。空ならブラウザ内の簡易判定
+		'hide_title'        => 1,                          // 1 = ウィジェットを置いたページではページタイトルを出さない
 	);
 }
 
@@ -302,6 +303,43 @@ function hda_shortcode() {
 add_shortcode( 'happy_assess', 'hda_shortcode' );
 
 /* ------------------------------------------------------------------
+ * ページタイトルを隠す（ウィジェットの見出し画像と重なるため）
+ * ------------------------------------------------------------------ */
+
+/** いま表示しているページが、ウィジェットを置いた投稿・固定ページか。 */
+function hda_is_widget_page() {
+	if ( ! is_singular() ) {
+		return false;
+	}
+	$post = get_queried_object();
+	return $post instanceof WP_Post && has_shortcode( (string) $post->post_content, 'happy_assess' );
+}
+
+function hda_should_hide_title( $post_id ) {
+	$s = hda_get_settings();
+	return ! empty( $s['hide_title'] ) && hda_is_widget_page() && (int) $post_id === (int) get_queried_object_id();
+}
+
+/** ブロックテーマ（Twenty Twenty-Five など）: そのページ自身のタイトルブロックだけ消す。 */
+function hda_hide_title_block( $content, $block, $instance = null ) {
+	if ( ! isset( $block['blockName'] ) || 'core/post-title' !== $block['blockName'] ) {
+		return $content;
+	}
+	$post_id = ( $instance instanceof WP_Block && isset( $instance->context['postId'] ) ) ? $instance->context['postId'] : get_the_ID();
+	return hda_should_hide_title( $post_id ) ? '' : $content;
+}
+add_filter( 'render_block', 'hda_hide_title_block', 10, 3 );
+
+/** クラシックテーマ: 本文ループ内のタイトルだけ消す（メニューやウィジェットのタイトルは残す）。 */
+function hda_hide_title_classic( $title, $post_id = 0 ) {
+	if ( is_admin() || ! in_the_loop() || ! is_main_query() || wp_is_block_theme() ) {
+		return $title;
+	}
+	return hda_should_hide_title( $post_id ) ? '' : $title;
+}
+add_filter( 'the_title', 'hda_hide_title_classic', 10, 2 );
+
+/* ------------------------------------------------------------------
  * 管理画面（設定 → ハッピーデンセン査定）
  * ------------------------------------------------------------------ */
 
@@ -330,6 +368,7 @@ function hda_sanitize_settings( $input ) {
 	$out['line_url']          = isset( $input['line_url'] ) ? esc_url_raw( trim( (string) $input['line_url'] ), array( 'http', 'https' ) ) : '';
 	$out['scroll_offset']     = isset( $input['scroll_offset'] ) ? max( 0, min( 400, (int) $input['scroll_offset'] ) ) : $defaults['scroll_offset'];
 	$out['classify_endpoint'] = isset( $input['classify_endpoint'] ) ? esc_url_raw( trim( (string) $input['classify_endpoint'] ), array( 'https' ) ) : '';
+	$out['hide_title']        = empty( $input['hide_title'] ) ? 0 : 1;
 	return $out;
 }
 
@@ -460,6 +499,11 @@ function hda_render_settings_page() {
 					<th scope="row"><label for="hda-line">LINEボタンのリンク先</label></th>
 					<td><input type="url" class="regular-text" id="hda-line" name="hda[line_url]" value="<?php echo esc_attr( $s['line_url'] ); ?>">
 					<p class="description">査定結果の画面に出るLINEボタンのリンク先です。空にするとボタンを表示しません。</p></td>
+				</tr>
+				<tr>
+					<th scope="row">ページタイトル</th>
+					<td><label><input type="checkbox" name="hda[hide_title]" value="1" <?php checked( ! empty( $s['hide_title'] ) ); ?>> ウィジェットを置いたページではページタイトルを表示しない</label>
+					<p class="description">ウィジェットの見出し画像とページタイトルが重なるため、既定では隠しています。チェックを外すと表示されます。</p></td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="hda-offset">固定ヘッダーの高さ</label></th>
