@@ -343,9 +343,9 @@
 @keyframes hdaPop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
 @keyframes hdaBubbleGlow { 0%, 100% { filter: drop-shadow(0 0 8px rgb(79 195 255 / 80%)); } 50% { filter: drop-shadow(0 0 22px rgb(79 195 255 / 100%)); } }
 .hda-screen--jackpot .hda-future { top: 190px; left: 1010px; font-family: Jost, sans-serif; font-size: 14px; font-weight: 700; letter-spacing: .14em; line-height: 1.5; color: var(--hda-cyan); }
-.hda-screen--jackpot .hda-cyber-complete { top: 380px; left: 300px; width: 520px; filter: drop-shadow(0 0 20px rgb(255 200 60 / 60%)); animation: hdaCompleteIn .6s cubic-bezier(.2,1.4,.4,1) both; }
+.hda-screen--jackpot .hda-cyber-complete { top: 342px; left: 300px; width: 520px; filter: drop-shadow(0 0 20px rgb(255 200 60 / 60%)); animation: hdaCompleteIn .6s cubic-bezier(.2,1.4,.4,1) both; }
 @keyframes hdaCompleteIn { from { opacity: 0; transform: scale(1.6); } to { opacity: 1; transform: none; } }
-.hda-screen--jackpot .hda-cyber-label { top: 492px; left: 280px; width: 560px; }
+.hda-screen--jackpot .hda-cyber-label { top: 574px; left: 280px; width: 560px; z-index: 4; }  /* 枠の上部の帯の中に収める（枠画像より手前） */
 .hda-screen--jackpot .hda-cyber-frame { top: 540px; left: 10px; width: 1100px; }
 .hda-screen--jackpot .hda-gold-fx { top: 470px; left: 0; width: 1120px; pointer-events: none; opacity: 0; mix-blend-mode: screen; }
 .hda-screen--jackpot.is-win .hda-gold-fx { animation: hdaGoldFx 2.4s ease-out both; }
