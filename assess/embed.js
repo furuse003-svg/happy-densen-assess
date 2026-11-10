@@ -45,18 +45,7 @@
   }
 
   /* ---------------- 共通パーツ ---------------- */
-  const ICON_CAMERA = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="5" y="13" width="38" height="27" rx="4" fill="none" stroke="currentColor" stroke-width="3"/><path d="M17 13l3-5h8l3 5" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="24" cy="26" r="7" fill="none" stroke="currentColor" stroke-width="3"/></svg>';
-  const ICON_AI = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="10" y="10" width="28" height="28" rx="5" fill="none" stroke="currentColor" stroke-width="3"/><text x="24" y="30" text-anchor="middle" font-family="Jost, sans-serif" font-weight="800" font-size="15" fill="currentColor">AI</text><path d="M17 4v6M24 4v6M31 4v6M17 38v6M24 38v6M31 38v6M4 17h6M4 24h6M4 31h6M38 17h6M38 24h6M38 31h6" stroke="currentColor" stroke-width="3"/></svg>';
   const ICON_DOC = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="9" y="5" width="30" height="38" rx="3" fill="none" stroke="currentColor" stroke-width="3"/><path d="M16 16h16M16 24h16M16 32h10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
-
-  const stepsHtml = (active) => `
-    <div class="hda-steps">
-      <div class="hda-step ${active > 1 ? "is-done" : active === 1 ? "is-active" : ""}"><span class="hda-step__icon">${ICON_CAMERA}</span><span class="hda-step__pill">写真をアップロード</span></div>
-      <span class="hda-steps__arrow">›</span>
-      <div class="hda-step ${active > 2 ? "is-done" : active === 2 ? "is-active" : ""}"><span class="hda-step__icon">${ICON_AI}</span><span class="hda-step__pill">AI解析</span></div>
-      <span class="hda-steps__arrow">›</span>
-      <div class="hda-step ${active === 3 ? "is-active" : ""}"><span class="hda-step__icon">${ICON_DOC}</span><span class="hda-step__pill">査定結果</span></div>
-    </div>`;
 
   const sideDeco = `
     <img class="hda-abs hda-title" src="${asset("title.jpg")}" alt="AIサイボーグ中村の電線自動査定">
@@ -142,7 +131,6 @@
       <img class="hda-abs hda-chara hda-chara--main" data-el="analyzeChara" src="${asset("nakamura-full1.png")}" alt="">
       <img class="hda-abs hda-neon hda-neon--react" data-el="analyzeNeon" src="${asset("neon-wrong.png")}" alt="" hidden>
       <div class="hda-abs hda-bubble hda-bubble--ai" data-el="analyzeBubbleWrap"><img src="${asset("robot-icon.jpg")}" alt=""><span data-el="analyzeBubble"><em>AI</em>解析が<br>完了したぞ！</span></div>
-      <div class="hda-abs hda-steps-wrap hda-steps" data-el="steps2">${stepsHtml(2).replace('<div class="hda-steps">', "").replace(/<\/div>\s*$/, "")}</div>
       <h2 class="hda-abs hda-h1" data-el="analyzeTitle">AI解析が完了しました！<span class="hda-h1sub" data-el="analyzeSub">種類を確認して、重量を入力してください。</span></h2>
       <div class="hda-abs hda-panel">
         <div class="hda-panel__head" data-el="resultHead"><span class="hda-check">✓</span><span data-el="resultHeadText">AI解析完了</span></div>
@@ -186,7 +174,6 @@
       ${sideDeco}
       <img class="hda-abs hda-chara hda-chara--main hda-chara--thumbs" src="${asset("nakamura-full2.png")}" alt="">
       <img class="hda-abs hda-neon" src="${asset("neon-happy.png")}" alt="いい電線だ！ハッピー価格で I'LL BE BACK">
-      <div class="hda-abs hda-steps" data-el="steps3">${stepsHtml(3).replace('<div class="hda-steps">', "").replace(/<\/div>\s*$/, "")}</div>
       <h2 class="hda-abs hda-h1">査定が完了しました！<span class="hda-h1sub">アップロードした電線の査定結果です。</span></h2>
       <div class="hda-abs hda-card" data-el="card">
         <div class="hda-panel__head"><span class="hda-check">✓</span>AI解析完了</div>
@@ -226,7 +213,6 @@
       <div class="hda-screen__bg"><img src="${asset("bg-cyber.jpg")}" alt=""></div>
       <img class="hda-abs hda-cyber-logo" src="${asset("cyber-logo.png")}" alt="AIサイボーグ中村の電線自動査定">
       <p class="hda-abs hda-recycle">RECYCLE<br>REUSE<br>CONNECT<br>TO<br>TOMORROW</p>
-      <img class="hda-abs hda-hand" src="${asset("handwritten.png")}" alt="">
       <img class="hda-abs hda-cyborg" src="${asset("cyborg.png")}" alt="">
       <img class="hda-abs hda-cyber-bubble" src="${asset("cyber-bubble.png")}" alt="いい値がついたぞ！">
       <p class="hda-abs hda-future">HAPPY<br>CLEAN<br>EARTH<br>BRIGHT<br>FUTURE</p>
