@@ -57,7 +57,6 @@
 .hda-vert { z-index: 3; font-size: 20px; font-weight: 700; font-style: italic; line-height: 1.7; color: #fff; white-space: nowrap; text-shadow: 0 2px 8px rgb(0 0 0 / 80%); }
 .hda-recycle { z-index: 3; font-family: Jost, sans-serif; font-size: 14px; font-weight: 700; letter-spacing: .14em; line-height: 1.5; color: #fff; }
 .hda-recycle::before, .hda-recycle::after { content: ""; display: block; width: 72px; height: 2px; background: #fff; margin: 6px 0; }
-.hda-hand { width: 320px; filter: drop-shadow(0 2px 6px rgb(0 0 0 / 80%)); }
 
 /* 中村（背景付き画像）: 縁をぼかして背景に馴染ませる */
 .hda-chara { filter: drop-shadow(0 18px 30px rgb(0 0 0 / 55%)); }
@@ -192,21 +191,9 @@
 .hda-screen--analyze .hda-recycle { top: 64px; left: 1000px; }
 .hda-screen--analyze .hda-chara--main { top: 150px; left: 700px; width: 420px; }
 .hda-screen--analyze .hda-bubble--ai { top: 800px; left: 780px; }
-.hda-screen--analyze .hda-steps { top: 242px; left: 52px; }
 .hda-screen--analyze .hda-h1 { top: 330px; left: 48px; font-size: 54px; }
 .hda-screen--analyze .hda-panel { top: 450px; left: 40px; width: 740px; }
 
-/* ステップ（3段: 写真をアップロード → AI解析 → 査定結果） */
-.hda-steps { display: flex; align-items: center; gap: 6px; }
-.hda-step { display: flex; flex-direction: column; align-items: center; }
-.hda-step__icon { position: relative; z-index: 1; display: grid; place-items: center; width: 56px; height: 56px; margin-bottom: -14px; border-radius: 50%; background: #0b1220; border: 3px solid #274a7a; color: #fff; }
-.hda-step__icon svg { width: 30px; height: 30px; }
-.hda-step__pill { display: grid; place-items: center; width: 176px; height: 46px; padding-top: 8px; border-radius: 12px; background: #0e1a2f; border: 1px solid #274a7a; color: #fff; font-size: 16px; font-weight: 700; }
-.hda-step.is-active .hda-step__pill { color: var(--hda-yellow); border-color: var(--hda-yellow); }
-.hda-step.is-active .hda-step__icon { background: var(--hda-yellow); border-color: var(--hda-yellow); color: #1a1a1a; box-shadow: 0 0 22px rgb(255 212 0 / 70%); }
-.hda-step.is-done .hda-step__icon { background: #143a5a; border-color: var(--hda-cyan); color: var(--hda-cyan); }
-.hda-step.is-done .hda-step__pill { color: var(--hda-sub); }
-.hda-steps__arrow { align-self: flex-end; margin-bottom: 12px; color: #fff; font-size: 22px; }
 
 .hda-h1 { font-size: 62px; font-weight: 900; line-height: 1.1; color: var(--hda-yellow); text-shadow: 0 4px 16px rgb(0 0 0 / 80%); letter-spacing: .01em; }
 .hda-h1sub { display: block; margin-top: 10px; font-size: 26px; font-weight: 700; color: #fff; text-shadow: 0 2px 8px rgb(0 0 0 / 80%); }
@@ -268,7 +255,6 @@
 .hda-screen--result .hda-recycle { top: 64px; left: 1000px; }
 .hda-screen--result .hda-chara--main { top: 150px; left: 680px; width: 440px; }
 .hda-screen--result .hda-neon { top: 760px; left: 812px; width: 300px; transform: rotate(-4deg); z-index: 5; }
-.hda-screen--result .hda-steps { top: 242px; left: 52px; }
 .hda-screen--result .hda-h1 { top: 336px; left: 48px; }
 .hda-screen--result .hda-card { top: 468px; left: 42px; width: 760px; }
 .hda-screen--result .hda-detail { top: 866px; left: 42px; width: 760px; }
@@ -317,7 +303,6 @@
 .hda-screen--jackpot .hda-cyber-logo { top: 22px; left: 48px; width: 330px; }
 .hda-screen--jackpot .hda-recycle { top: 150px; left: 60px; color: var(--hda-cyan); font-size: 13px; }
 .hda-screen--jackpot .hda-recycle::before, .hda-screen--jackpot .hda-recycle::after { background: var(--hda-cyan); width: 40px; }
-.hda-screen--jackpot .hda-hand { top: 140px; left: 440px; width: 240px; transform: rotate(-8deg); }
 .hda-screen--jackpot .hda-cyborg { top: 0; left: 610px; width: 520px; filter: drop-shadow(0 0 30px rgb(79 195 255 / 40%)); animation: hdaCharaIn .7s cubic-bezier(.2,1.2,.4,1) both; }
 @keyframes hdaCharaIn { from { opacity: 0; transform: translate(40px, 30px) scale(.9); } to { opacity: 1; transform: none; } }
 .hda-screen--jackpot .hda-cyber-bubble { top: 62px; left: 860px; width: 250px; animation: hdaPop .5s cubic-bezier(.2,1.4,.4,1) .3s both, hdaBubbleGlow 1.4s ease-in-out .8s infinite; }
@@ -394,33 +379,31 @@
 .hda-screen--upload .hda-features { top: 866px; left: 0; width: 840px; grid-template-columns: repeat(2, 1fr); gap: 12px 24px; padding: 16px 28px; }
 
 /* --- AI解析 --- */
-.hda-screen--analyze { height: 1140px; }
+.hda-screen--analyze { height: 990px; }
 .hda-screen--analyze .hda-title { top: 22px; left: 24px; width: 470px; }
 .hda-screen--analyze .hda-recycle { top: 54px; left: 744px; font-size: 12px; }
 .hda-screen--analyze .hda-recycle::before, .hda-screen--analyze .hda-recycle::after { width: 56px; }
 .hda-screen--analyze .hda-chara--main { top: 60px; left: 500px; width: 340px; }
-.hda-screen--analyze .hda-steps { top: 214px; left: 28px; }
-.hda-screen--analyze .hda-h1 { top: 296px; left: 28px; font-size: 44px; }
+.hda-screen--analyze .hda-h1 { top: 214px; left: 28px; font-size: 44px; }
 .hda-screen--analyze .hda-h1sub { font-size: 20px; }
-.hda-screen--analyze .hda-panel { top: 410px; left: 24px; width: 792px; }
-.hda-screen--analyze .hda-bubble--ai { top: 300px; left: 560px; width: 256px; font-size: 20px; padding: 10px 12px 10px 10px; }
+.hda-screen--analyze .hda-panel { top: 328px; left: 24px; width: 792px; }
+.hda-screen--analyze .hda-bubble--ai { top: 218px; left: 560px; width: 256px; font-size: 20px; padding: 10px 12px 10px 10px; }
 .hda-screen--analyze .hda-bubble--ai img { width: 44px; height: 54px; }
 
 /* --- 査定完了（通常） --- */
-.hda-screen--result { height: 1380px; }
+.hda-screen--result { height: 1374px; }
 .hda-screen--result .hda-title { top: 22px; left: 24px; width: 470px; }
 .hda-screen--result .hda-recycle { top: 54px; left: 744px; font-size: 12px; }
 .hda-screen--result .hda-recycle::before, .hda-screen--result .hda-recycle::after { width: 56px; }
-.hda-screen--result .hda-chara--main { top: 60px; left: 470px; width: 375px; }
-.hda-screen--result .hda-neon { top: 250px; left: 590px; width: 236px; }
-.hda-screen--result .hda-steps { top: 214px; left: 28px; }
-.hda-screen--result .hda-h1 { top: 296px; left: 28px; font-size: 48px; }
+.hda-screen--result .hda-chara--main { top: 60px; left: 494px; width: 375px; }
+.hda-screen--result .hda-neon { top: 196px; left: 596px; width: 236px; }
+.hda-screen--result .hda-h1 { top: 214px; left: 28px; font-size: 44px; }
 .hda-screen--result .hda-h1sub { font-size: 20px; }
-.hda-screen--result .hda-card { top: 420px; left: 24px; width: 792px; }
-.hda-screen--result .hda-detail { top: 820px; left: 24px; width: 792px; }
-.hda-screen--result .hda-line-wrap { top: 1082px; left: 60px; width: 720px; }
-.hda-screen--result .hda-again-wrap { top: 1192px; left: 220px; width: 400px; }
-.hda-screen--result .hda-features { top: 1268px; left: 0; width: 840px; height: 112px; padding: 16px 24px; gap: 12px; }
+.hda-screen--result .hda-card { top: 338px; left: 24px; width: 792px; }
+.hda-screen--result .hda-detail { top: 738px; left: 24px; width: 792px; }
+.hda-screen--result .hda-line-wrap { top: 1076px; left: 60px; width: 720px; }
+.hda-screen--result .hda-again-wrap { top: 1186px; left: 220px; width: 400px; }
+.hda-screen--result .hda-features { top: 1262px; left: 0; width: 840px; height: 112px; padding: 16px 24px; gap: 12px; }
 .hda-screen--result .hda-feature img { width: 48px; height: 48px; }
 .hda-screen--result .hda-feature b { font-size: 16px; }
 .hda-card__photo img { width: 100%; max-width: 300px; height: 190px; }
@@ -445,6 +428,6 @@
 /* ---------- 電線以外／ハゲ頭のリアクション（AI解析画面） ---------- */
 .hda-screen--analyze .hda-chara--react { top: 30px; left: 500px; width: 340px; }
 .hda-screen--analyze .hda-neon--react { top: 196px; left: 540px; width: 250px; transform: rotate(-4deg); z-index: 5; animation: hdaNeonGlow 1.6s ease-in-out infinite, hdaNeonPop .45s cubic-bezier(.2,1.4,.4,1) both; }
-.hda-screen--analyze .hda-h1.is-subonly { top: 326px; width: 440px; }   /* ステップ表示との間に24px以上あける */
+.hda-screen--analyze .hda-h1.is-subonly { top: 232px; width: 440px; }   /* タイトル画像との間に24px以上あける */
 .hda-screen--analyze .hda-h1.is-subonly .hda-h1sub { margin-top: 0; font-size: 22px; line-height: 1.5; }
 @keyframes hdaNeonPop { from { opacity: 0; transform: rotate(-4deg) scale(.6); } to { opacity: 1; transform: rotate(-4deg) scale(1); } }
