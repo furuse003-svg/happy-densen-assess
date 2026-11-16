@@ -12,7 +12,9 @@
   "use strict";
 
   const SCRIPT = document.currentScript;
-  const BASE = SCRIPT && SCRIPT.src ? SCRIPT.src.replace(/[^/]*$/, "") : "";
+  // 画像などの置き場所。WordPress プラグインでは設定（assetBase）で明示的に渡す。
+  // 渡されていなければ、このスクリプト自身の置き場所から求める。
+  const BASE = (window.HAPPY_CONFIG && window.HAPPY_CONFIG.assetBase) || (SCRIPT && SCRIPT.src ? SCRIPT.src.replace(/[^/]*$/, "") : "");
   const IMG = BASE + "img/";
   // 画像パス解決（共有用ビルドでは window.HAPPY_ASSETS に data URI が入る）
   const asset = (name) => (window.HAPPY_ASSETS && window.HAPPY_ASSETS[name]) || (IMG + name);
