@@ -440,8 +440,11 @@
 .hda-screen--result .hda-again-wrap { top: 1186px; left: 60px; width: 352px; }
 .hda-screen--result .hda-top-wrap { top: 1186px; left: 428px; width: 352px; }
 .hda-top-wrap .hda-btn, .hda-cyber-top .hda-btn { width: 100%; text-decoration: none; }
-/* 最強バージョン: 0.75倍に縮めた画像の下に空く暗い部分に置く */
-.hda-screen--jackpot .hda-cyber-top { top: 1076px; left: 220px; width: 400px; z-index: 2; }
+/* 最強バージョン: 「もう一度査定する」（0.75倍に縮めた内側）と「トップページへ」（外側・等倍）を横並び。
+   外側の座標で 幅360 + 間16 + 幅360 を中央寄せ（left 52 / 428）。retry は内側座標なので ÷0.75 */
+.hda-screen--jackpot .hda-cyber-retry { left: 69px; width: 480px; }
+.hda-screen--jackpot .hda-cyber-top { top: 936px; left: 428px; width: 360px; z-index: 2; }
+.hda-screen--jackpot .hda-cyber-top .hda-btn { min-height: 48px; padding-top: 6px; padding-bottom: 6px; border-color: var(--hda-cyan); } /* 隣の画像ボタン（高さ48）に揃える */
 .hda-screen--result .hda-features { top: 1262px; left: 0; width: 840px; height: 112px; padding: 16px 24px; gap: 12px; }
 .hda-screen--result .hda-feature img { width: 48px; height: 48px; }
 .hda-screen--result .hda-feature b { font-size: 16px; }
