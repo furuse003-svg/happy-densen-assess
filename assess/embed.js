@@ -99,7 +99,7 @@
         </label>
         <p class="hda-examples__title">断面（切り口）が見える写真でOK！</p>
         <div class="hda-examples__row hda-examples__row--3">
-          <figure><img src="${asset("ex-hachi.jpg")}" alt=""><figcaption>8割銅線<small>黒色・銅が太い</small></figcaption></figure>
+          <figure><img src="${asset("ex-hachi.jpg")}" alt=""><figcaption>8割銅線<small>被覆が薄い・銅が太い</small></figcaption></figure>
           <figure><img src="${asset("ex-roku.jpg")}" alt=""><figcaption>6割銅線<small>黒色・芯線が複数</small></figcaption></figure>
           <figure><img src="${asset("ex-f.jpg")}" alt=""><figcaption>Fケーブル<small>灰色・平たい</small></figcaption></figure>
         </div>
@@ -111,9 +111,9 @@
         <div class="hda-example__card">
           <img src="${asset("ex-hachi.jpg")}" alt="">
           <div>
-            <p class="hda-example__name">8割銅線（CVケーブル）</p>
+            <p class="hda-example__name">8割銅線</p>
             <dl class="hda-example__rows">
-              <div><dt>種類</dt><dd>黒色・銅率 約80%</dd></div>
+              <div><dt>種類</dt><dd>銅率 約80%</dd></div>
               <div><dt>重量</dt><dd>約 20 kg</dd></div>
               <div><dt>単価</dt><dd data-el="exPrice"></dd></div>
             </dl>
@@ -206,6 +206,7 @@
       </div>
       <div class="hda-abs hda-line-wrap"><a class="hda-btn hda-btn--line" data-el="lineLink2" href="#" target="_blank" rel="noopener"><span class="hda-line__icon">LINE</span><span>LINEで正式査定を依頼する</span><span class="hda-chev" aria-hidden="true">›</span></a></div>
       <div class="hda-abs hda-again-wrap"><button type="button" class="hda-btn hda-btn--ghost" data-el="again">別の写真で査定する<span class="hda-chev" aria-hidden="true">›</span></button></div>
+      <div class="hda-abs hda-top-wrap"><a class="hda-btn hda-btn--ghost" data-el="topLink" href="#">トップページへ<span class="hda-chev" aria-hidden="true">›</span></a></div>
       ${featuresHtml(false)}
     </section>
 
@@ -229,6 +230,7 @@
       <button type="button" class="hda-abs hda-cyber-retry" data-el="retry"><img src="${asset("cyber-retry.png")}" alt="もう一度査定する"></button>
       <p class="hda-abs hda-cyber-note">※表示金額は「単価 × 重量」の概算です。実際の買取金額は現物確認後に確定します。</p>
       </div>
+      <div class="hda-abs hda-cyber-top"><a class="hda-btn hda-btn--ghost" data-el="topLink2" href="#">トップページへ<span class="hda-chev" aria-hidden="true">›</span></a></div>
     </section>
     <div class="hda-cutin-fx" data-el="cutinFx" hidden aria-hidden="true"><span class="hda-cutin-fx__flash"></span><span class="hda-cutin-fx__stripes"></span><span class="hda-cutin-fx__text">JACKPOT!!</span></div>
   </div>
@@ -909,6 +911,8 @@
 
     // LINEボタン（config.lineUrl が無ければ非表示）
     ["lineLink2", "lineLink3"].forEach((k) => { if (CFG.lineUrl) el(k).href = CFG.lineUrl; else el(k).hidden = true; });
+    // 「トップページへ」: 設定（topUrl）が空ならボタンごと出さない
+    ["topLink", "topLink2"].forEach((k) => { if (CFG.topUrl) el(k).href = CFG.topUrl; else el(k).parentElement.hidden = true; });
 
     renderPrices();
     fetchRemotePrices();

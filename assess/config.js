@@ -25,6 +25,9 @@ window.HAPPY_CONFIG = {
   // ステップ切替時にウィジェット上端を画面のどこに合わせるか（固定ヘッダーの高さ分、px）
   scrollOffset: 80,
 
-  // 「査定の流れ」末尾の LINE ボタンのリンク先。空欄にするとボタンを非表示にします。
-  lineUrl: "https://page.line.me/613fwlhk?openQrModal=true"
+  // 査定結果画面の LINE ボタンのリンク先。空欄にするとボタンを非表示にします。
+  lineUrl: "https://page.line.me/613fwlhk?openQrModal=true",
+
+  // 査定結果画面の「トップページへ」ボタンのリンク先。空欄にするとボタンを非表示にします。
+  topUrl: "https://used-cable.net/"
 };
