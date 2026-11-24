@@ -227,10 +227,13 @@
       <img class="hda-abs hda-cyber-tax" src="${asset("cyber-tax.png")}" alt="税込・概算">
       <img class="hda-abs hda-cyber-catch" src="${asset("cyber-catch.png")}" alt="その銅線を、価値に変えよう。">
       <a class="hda-abs hda-cyber-line" data-el="lineLink3" href="#" target="_blank" rel="noopener"><img src="${asset("cyber-line.png")}" alt="LINEで買取を申し込む"></a>
-      <button type="button" class="hda-abs hda-cyber-retry" data-el="retry"><img src="${asset("cyber-retry.png")}" alt="もう一度査定する"></button>
       <p class="hda-abs hda-cyber-note">※表示金額は「単価 × 重量」の概算です。実際の買取金額は現物確認後に確定します。</p>
       </div>
-      <div class="hda-abs hda-cyber-top"><a class="hda-btn hda-btn--ghost" data-el="topLink2" href="#">トップページへ<span class="hda-chev" aria-hidden="true">›</span></a></div>
+      <!-- 「もう一度査定する」「トップページへ」: LINE ボタンと同じ幅に2つ並べる（同じ形。縮小しない外側に置く） -->
+      <div class="hda-abs hda-cyber-actions">
+        <div class="hda-cyber-slot"><button type="button" class="hda-cyber-btn" data-el="retry"><span>もう一度査定する</span><span class="hda-chev" aria-hidden="true">›</span></button></div>
+        <div class="hda-cyber-slot"><a class="hda-cyber-btn" data-el="topLink2" href="#"><span>トップページへ</span><span class="hda-chev" aria-hidden="true">›</span></a></div>
+      </div>
     </section>
     <div class="hda-cutin-fx" data-el="cutinFx" hidden aria-hidden="true"><span class="hda-cutin-fx__flash"></span><span class="hda-cutin-fx__stripes"></span><span class="hda-cutin-fx__text">JACKPOT!!</span></div>
   </div>
