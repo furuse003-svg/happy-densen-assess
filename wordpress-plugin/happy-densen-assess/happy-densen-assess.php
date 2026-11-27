@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ハッピーデンセン AI自動査定
  * Description: 電線の写真から種類を判別し、重量を入れると参考査定金額を表示する査定ウィジェット。ページにショートコード [happy_assess] を置くと表示されます。買取単価は価格表ページから自動取得できます。
- * Version: 1.0.2
+ * Version: 1.0.3
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: From North
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HDA_VERSION', '1.0.2' );
+define( 'HDA_VERSION', '1.0.3' );
 define( 'HDA_OPTION', 'hda_settings' );
 define( 'HDA_PRICE_CACHE', 'hda_price_cache' );
 define( 'HDA_CRON_HOOK', 'hda_refresh_prices' );
