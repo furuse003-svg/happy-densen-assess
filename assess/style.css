@@ -321,9 +321,6 @@
 .hda-screen--jackpot .hda-cyber-line { top: 1070px; left: 90px; width: 940px; display: block; }
 .hda-screen--jackpot .hda-cyber-line img { width: 100%; transition: filter .15s; }
 .hda-screen--jackpot .hda-cyber-line:hover img { filter: brightness(1.1); }
-.hda-screen--jackpot .hda-cyber-retry { top: 1248px; left: 300px; width: 520px; margin: 0; padding: 0; border: 0; background: none; }
-.hda-screen--jackpot .hda-cyber-retry img { width: 100%; }
-.hda-screen--jackpot .hda-cyber-retry:hover img { filter: brightness(1.15); }
 .hda-screen--jackpot .hda-cyber-note { top: 1345px; left: 0; width: 1120px; text-align: center; font-size: 15px; font-weight: 700; color: #fff; text-shadow: 0 2px 6px rgb(0 0 0 / 80%); }
 /* 金色の数字リール（画像） */
 .hda-gold { top: 610px; left: 60px; width: 1000px; height: 300px; display: flex; align-items: center; justify-content: center; gap: 6px; }
@@ -402,7 +399,29 @@
 .hda-screen--result .hda-card { top: 338px; left: 24px; width: 792px; }
 .hda-screen--result .hda-detail { top: 738px; left: 24px; width: 792px; }
 .hda-screen--result .hda-line-wrap { top: 1076px; left: 60px; width: 720px; }
-.hda-screen--result .hda-again-wrap { top: 1186px; left: 220px; width: 400px; }
+/* 「別の写真で査定する」と「トップページへ」を横並び（LINE ボタンの幅に揃える） */
+.hda-screen--result .hda-again-wrap { top: 1186px; left: 60px; width: 352px; }
+.hda-screen--result .hda-top-wrap { top: 1186px; left: 428px; width: 352px; }
+.hda-top-wrap .hda-btn, .hda-cyber-top .hda-btn { width: 100%; text-decoration: none; }
+/* 最強バージョン: 「もう一度査定する」「トップページへ」を LINE ボタン（緑の本体 外側座標 x96〜736）と同じ幅に横並び。
+   形は元の画像ボタン（角を斜めに落とした水色枠・紺地）を CSS で再現し、2つとも同じ見た目にする */
+.hda-screen--jackpot .hda-cyber-actions { top: 944px; left: 96px; width: 640px; display: flex; gap: 16px; z-index: 2; filter: drop-shadow(0 0 6px rgb(79 195 255 / 55%)); }
+.hda-cyber-slot { flex: 1 1 0; min-width: 0; }
+.hda-cyber-btn {
+  --cut: 10px;
+  position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 48px; margin: 0; padding: 0 40px;
+  border: 0; background: var(--hda-cyan); color: #fff; font: inherit; font-size: 18px; font-weight: 700; letter-spacing: .04em; text-decoration: none; cursor: pointer;
+  clip-path: polygon(var(--cut) 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, var(--cut) 100%, 0 calc(100% - var(--cut)), 0 var(--cut));
+}
+.hda-cyber-btn::before {
+  content: ""; position: absolute; inset: 2px; background: #071423;
+  clip-path: polygon(9px 0, calc(100% - 9px) 0, 100% 9px, 100% calc(100% - 9px), calc(100% - 9px) 100%, 9px 100%, 0 calc(100% - 9px), 0 9px);
+}
+.hda-cyber-btn > span { position: relative; }
+.hda-cyber-btn .hda-chev { position: absolute; right: 18px; font-size: 24px; line-height: 1; }
+.hda-cyber-btn:hover::before { background: #0d2238; }
+.hda-cyber-btn:focus-visible { outline: none; }
+.hda-cyber-slot:has(:focus-visible) { outline: 6px solid #FFD43D; outline-offset: 2px; } /* ボタン自体は clip-path で切れるので外側の枠に出す */
 .hda-screen--result .hda-features { top: 1262px; left: 0; width: 840px; height: 112px; padding: 16px 24px; gap: 12px; }
 .hda-screen--result .hda-feature img { width: 48px; height: 48px; }
 .hda-screen--result .hda-feature b { font-size: 16px; }

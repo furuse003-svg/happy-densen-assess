@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ハッピーデンセン AI自動査定
  * Description: 電線の写真から種類を判別し、重量を入れると参考査定金額を表示する査定ウィジェット。ページにショートコード [happy_assess] を置くと表示されます。買取単価は価格表ページから自動取得できます。
- * Version: 1.0.1
+ * Version: 1.0.3
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: From North
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HDA_VERSION', '1.0.1' );
+define( 'HDA_VERSION', '1.0.3' );
 define( 'HDA_OPTION', 'hda_settings' );
 define( 'HDA_PRICE_CACHE', 'hda_price_cache' );
 define( 'HDA_CRON_HOOK', 'hda_refresh_prices' );
@@ -32,6 +32,7 @@ function hda_default_settings() {
 		'source_url'        => 'https://colors.main.jp/',  // 価格表ページ
 		'happy_chance'      => 33,                         // 最強バージョン（カットイン）が出る確率 %
 		'line_url'          => 'https://page.line.me/613fwlhk?openQrModal=true',
+		'top_url'           => 'https://used-cable.net/',     // 査定結果の「トップページへ」のリンク先
 		'scroll_offset'     => 80,                         // 固定ヘッダーの高さ px
 		'classify_endpoint' => '',                         // AI判定APIのURL。空ならブラウザ内の簡易判定
 		'hide_title'        => 1,                          // 1 = ウィジェットを置いたページではページタイトルを出さない
@@ -264,6 +265,7 @@ function hda_enqueue_assets() {
 		'pricesEndpoint'   => esc_url_raw( rest_url( 'happy-assess/v1/prices' ) ),
 		'scrollOffset'     => (int) $settings['scroll_offset'],
 		'lineUrl'          => (string) $settings['line_url'],
+		'topUrl'           => (string) $settings['top_url'],
 		'assetBase'        => plugin_dir_url( __FILE__ ) . 'assets/',
 	);
 	wp_enqueue_style( 'happy-densen-assess' );
@@ -366,6 +368,7 @@ function hda_sanitize_settings( $input ) {
 	$out['source_url'] = $source ? $source : $defaults['source_url'];
 	$out['happy_chance']      = isset( $input['happy_chance'] ) ? max( 0, min( 100, (int) $input['happy_chance'] ) ) : $defaults['happy_chance'];
 	$out['line_url']          = isset( $input['line_url'] ) ? esc_url_raw( trim( (string) $input['line_url'] ), array( 'http', 'https' ) ) : '';
+	$out['top_url']           = isset( $input['top_url'] ) ? esc_url_raw( trim( (string) $input['top_url'] ), array( 'http', 'https' ) ) : '';
 	$out['scroll_offset']     = isset( $input['scroll_offset'] ) ? max( 0, min( 400, (int) $input['scroll_offset'] ) ) : $defaults['scroll_offset'];
 	$out['classify_endpoint'] = isset( $input['classify_endpoint'] ) ? esc_url_raw( trim( (string) $input['classify_endpoint'] ), array( 'https' ) ) : '';
 	$out['hide_title']        = empty( $input['hide_title'] ) ? 0 : 1;
@@ -499,6 +502,11 @@ function hda_render_settings_page() {
 					<th scope="row"><label for="hda-line">LINEボタンのリンク先</label></th>
 					<td><input type="url" class="regular-text" id="hda-line" name="hda[line_url]" value="<?php echo esc_attr( $s['line_url'] ); ?>">
 					<p class="description">査定結果の画面に出るLINEボタンのリンク先です。空にするとボタンを表示しません。</p></td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="hda-top">「トップページへ」のリンク先</label></th>
+					<td><input type="url" class="regular-text" id="hda-top" name="hda[top_url]" value="<?php echo esc_attr( $s['top_url'] ); ?>">
+					<p class="description">査定結果の画面に出る「トップページへ」ボタンのリンク先です。空にするとボタンを表示しません。</p></td>
 				</tr>
 				<tr>
 					<th scope="row">ページタイトル</th>
